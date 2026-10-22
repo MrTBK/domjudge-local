@@ -1,0 +1,109 @@
+{% if contest is empty %}
+    <div class="hive-card text-center py-5 my-4">
+        <div class="d-inline-flex p-3 rounded-circle bg-light border mb-3">
+            <i class="fas fa-flag-checkered fa-2x text-muted"></i>
+        </div>
+        <h1 id="teamwelcome" class="h3 fw-bold mb-2">Welcome, <span id="teamwelcometeam">{{ team.effectiveName }}</span>!</h1>
+        <h2 id="contestnotstarted" class="h5 text-muted fw-normal">There's no active contest for you (yet).</h2>
+    </div>
+{% elseif not contest.freezeData.started %}
+    <div class="hive-card text-center py-5 my-4">
+        <div class="d-inline-flex p-3 rounded-circle bg-warning bg-opacity-10 border border-warning mb-3">
+            <i class="fas fa-hourglass-start fa-2x text-warning"></i>
+        </div>
+        <h1 id="teamwelcome" class="h3 fw-bold mb-2">Welcome, <span id="teamwelcometeam">{{ team.effectiveName }}</span>!</h1>
+        <h2 id="contestnotstarted" class="h5 text-muted fw-normal">
+            Contest {{ contest | printContestStart }}
+        </h2>
+    </div>
+{% else %}
+
+    <!-- Top Team & Contest Bar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 px-1">
+        <div>
+            <span class="badge rounded-pill px-3 py-1 text-uppercase fw-bold" style="background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-size: 0.72rem; letter-spacing: 0.05em;">
+                🐝 Active Contest
+            </span>
+            <h2 class="h4 fw-bold mt-1 mb-0" style="letter-spacing: -0.02em; color: #0F172A;">
+                {{ current_team_contest.name|default('Live Contest Workspace') }}
+            </h2>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-secondary small fw-medium">Team:</span>
+            <span class="badge bg-white text-dark border px-3 py-2 fw-bold shadow-sm" style="font-size: 0.88rem; border-color: #CBD5E1 !important;">
+                <i class="fas fa-users me-1 text-primary"></i> {{ team.effectiveName }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Live Scoreboard Summary -->
+    <div id="teamscoresummary">
+        {% set displayRank = not contest.freezeData.showFrozen %}
+        {% include 'partials/scoreboard_table.html.twig' with {displayRank: displayRank, jury: false, public: false} %}
+    </div>
+
+    <div class="mt-3" data-flash-messages>
+        {% include 'partials/messages.html.twig' %}
+        {% if not contest.allowSubmit %}
+            {% include 'partials/alert.html.twig' with {'type': 'danger', 'message': 'Submissions (temporarily) disabled.'} %}
+        {% endif %}
+    </div>
+
+    <!-- Bento Grid: Submissions & Clarifications -->
+    <div class="row g-3 mt-1">
+        <!-- Submissions Column -->
+        <div class="col-lg-7 col-12">
+            <div class="hive-card h-100">
+                <div class="hive-card-header">
+                    <h3 class="hive-card-title">
+                        <i class="fas fa-history text-primary"></i> Submissions
+                    </h3>
+                </div>
+
+                {% include 'team/partials/submission_list.html.twig' %}
+            </div>
+        </div>
+
+        <!-- Clarifications Column -->
+        <div class="col-lg-5 col-12">
+            <div class="hive-card h-100">
+                <div class="hive-card-header">
+                    <h3 class="hive-card-title">
+                        <i class="fas fa-comments text-primary"></i> Clarifications
+                    </h3>
+                    <a href="{{ path('team_clarification_add') }}" class="btn btn-secondary btn-sm" data-ajax-modal data-ajax-modal-after="initModalClarificationPreviewAdd">
+                        <i class="fas fa-plus me-1"></i> Ask Question
+                    </a>
+                </div>
+
+                <!-- Jury Broadcasts -->
+                <h6 class="text-uppercase fw-bold text-muted mb-2" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                    Announcements & Answers
+                </h6>
+                {% if clarifications is empty %}
+                    <div class="p-3 mb-3 text-center rounded-3 bg-light border text-muted small">
+                        <i class="fas fa-info-circle me-1"></i> No jury announcements yet.
+                    </div>
+                {% else %}
+                    {% include 'team/partials/clarification_list.html.twig' with {clarifications: clarifications} %}
+                {% endif %}
+
+                <!-- Team Requests -->
+                <h6 class="text-uppercase fw-bold text-muted mb-2 mt-4" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                    Your Questions
+                </h6>
+                {% if clarificationRequests is empty %}
+                    <div class="p-3 text-center rounded-3 bg-light border text-muted small">
+                        No clarification requests submitted.
+                    </div>
+                {% else %}
+                    {% include 'team/partials/clarification_list.html.twig' with {clarifications: clarificationRequests} %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if ajax is defined and ajax %}
+    {% include 'partials/scoreboard_progress_bar.html.twig' with {margin: -9, contest: current_team_contest} %}
+{% endif %}

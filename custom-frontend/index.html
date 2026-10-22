@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESEN HIVE CLUB • Contest Arena</title>
+  
+  <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- GSAP & Lenis Smooth Scroll -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            hive: {
+              50: '#FFFBEB',
+              100: '#FEF3C7',
+              200: '#FDE68A',
+              300: '#FCD34D',
+              400: '#FBBF24',
+              500: '#F59E0B', // Primary Hive Gold
+              600: '#D97706',
+              700: '#B45309',
+              800: '#92400E',
+              900: '#78350F',
+            },
+            brand: {
+              500: '#6366F1',
+              600: '#4F46E5',
+            },
+            canvas: '#F8FAFC',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Tabular Numerics everywhere numbers or timers appear */
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    
+    /* Linear / React Bits Spotlight Card Styling */
+    .spotlight-card {
+      position: relative;
+      background: #FFFFFF;
+      box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+      border: 1px solid #E2E8F0;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.1s;
+    }
+    .spotlight-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(500px circle at var(--mouse-x, -999px) var(--mouse-y, -999px), rgba(245, 158, 11, 0.08), transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .spotlight-card-content {
+      position: relative;
+      z-index: 2;
+    }
+    
+    /* Inner 1px Highlight */
+    .glass-highlight {
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 8px -2px rgba(15, 23, 42, 0.05);
+    }
+
+    /* Honeycomb ambient pattern */
+    .bg-honeycomb-pattern {
+      background-color: #F8FAFC;
+      background-image: radial-gradient(rgba(245, 158, 11, 0.12) 1px, transparent 0);
+      background-size: 24px 24px;
+      background-position: -19px -19px;
+    }
+
+    /* Headings and Paragraph Balance */
+    h1, h2, h3, h4, h5, h6 {
+      text-wrap: balance;
+    }
+    p {
+      text-wrap: pretty;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+
+    /* Scoreboard ICPC Cell Styles */
+    .icpc-first-solve {
+      background: #10B981 !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+    }
+    .icpc-solved {
+      background: #ECFDF5;
+      color: #047857;
+      border: 1px solid #A7F3D0;
+    }
+    .icpc-failed {
+      background: #FFF1F2;
+      color: #BE123C;
+      border: 1px solid #FECDD3;
+    }
+    .icpc-pending {
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #BFDBFE;
+    }
+
+    /* Glowing pulse animation */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.96); opacity: 0.9; }
+      50% { transform: scale(1.08); opacity: 0.4; }
+      100% { transform: scale(0.96); opacity: 0.9; }
+    }
+    .animate-pulse-ring {
+      animation: pulse-ring 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-900 font-sans antialiased selection:bg-amber-500 selection:text-white flex flex-col bg-honeycomb-pattern">
+
+  <!-- ================= TOP COMMAND BAR ================= -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 glass-highlight">
+    <div class="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- ESEN HIVE CLUB Brand & Contest Indicator -->
+      <div class="flex items-center gap-3 shrink-0 cursor-pointer" onclick="handleBrandClick()">
+        <!-- Official Hive Hexagon SVG Emblem -->
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-amber-600 to-amber-500 flex items-center justify-center text-slate-950 shadow-md shadow-amber-500/25 relative overflow-hidden group">
+          <svg class="w-6 h-6 text-slate-950 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor">
+            <!-- Honeycomb Hexagon with interconnected Hive Core -->
+            <path d="M12 2L3.5 7v10L12 22l8.5-5V7L12 2zm0 2.31l6.5 3.82v7.74L12 19.69l-6.5-3.82V8.13L12 4.31z" fill-rule="evenodd"/>
+            <polygon points="12,7 16,9.3 16,14.7 12,17 8,14.7 8,9.3" fill="rgba(15, 23, 42, 0.9)"/>
+            <polygon points="12,9 14.5,10.4 14.5,13.6 12,15 9.5,13.6 9.5,10.4" fill="#FBBF24"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-slate-900 text-base tracking-tight">ESEN HIVE CLUB</span>
+            <span id="contest-status-badge" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Contest Active
+            </span>
+          </div>
+          <div class="text-xs text-slate-500 font-medium flex items-center gap-2">
+            <span id="contest-formal-name">École Supérieure d'Économie Numérique</span>
+            <span class="text-slate-300">•</span>
+            <span id="contest-time-info" class="font-mono tabular-nums text-slate-600">00:00 / 00:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Contest Countdown Clock (Always visible in header) -->
+      <div class="hidden md:flex items-center gap-2 bg-slate-100/90 px-3.5 py-1.5 rounded-xl border border-slate-200 text-slate-700 shadow-inner">
+        <svg class="w-4 h-4 text-amber-600 animate-spin" style="animation-duration: 6s;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Contest Clock:</span>
+        <span id="countdown-timer" class="font-mono font-bold text-slate-900 text-sm tracking-wide tabular-nums">00:00:00</span>
+        <span id="freeze-pill" class="hidden ml-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">FROZEN</span>
+      </div>
+
+      <!-- Navigation Tabs (ONLY VISIBLE WHEN LOGGED IN AS TEAM) -->
+      <nav id="nav-tabs" class="hidden flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+        <button onclick="switchTab('workspace')" id="tab-workspace" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 bg-white text-amber-700 shadow-sm">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Workspace
+        </button>
+        <button onclick="switchTab('submissions')" id="tab-submissions" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition-all duration-150 flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+          Submissions
+          <span id="submissions-count-badge" class="hidden ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">0</span>
+        </button>
+        <button onclick="switchTab('scoreboard')" id="tab-scoreboard" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition-all duration-150 flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Live Scoreboard
+        </button>
+        <button onclick="switchTab('clarifications')" id="tab-clarifications" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition-all duration-150 flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          Clarifications
+          <span id="clarifications-unread-badge" class="hidden ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">0</span>
+        </button>
+      </nav>
+
+      <!-- User Profile & Auth Button -->
+      <div class="flex items-center gap-3">
+        <div id="user-profile-chip" class="hidden items-center gap-2 bg-amber-50/80 px-3 py-1.5 rounded-xl border border-amber-200 text-slate-800">
+          <div class="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-xs flex items-center justify-center shadow-sm">
+            <span id="user-avatar-initial">T</span>
+          </div>
+          <div class="text-left">
+            <div id="user-display-name" class="text-xs font-bold text-slate-900 truncate max-w-[130px]">Team Name</div>
+            <div id="user-role-desc" class="text-[10px] font-semibold text-amber-700 leading-none">team</div>
+          </div>
+        </div>
+
+        <button id="auth-btn" onclick="toggleAuthModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 shadow-sm active:scale-[0.98] transition-all flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+          </svg>
+          <span>Team Sign In</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="flex-1 max-w-[1700px] w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col">
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ================= PUBLIC WELCOME VIEW (DEFAULT FOR GUESTS) ================= -->
+    <section id="view-landing" class="flex-1 flex flex-col items-center justify-center py-8 sm:py-12">
+      
+      <!-- Center Emblem & Title -->
+      <div class="text-center max-w-3xl mx-auto mb-10">
+        
+        <!-- Animated ESEN Hive Club Insignia -->
+        <div class="relative inline-flex items-center justify-center mb-6">
+          <div class="absolute -inset-4 rounded-full bg-gradient-to-r from-amber-400/20 via-amber-500/20 to-amber-600/20 blur-xl animate-pulse-ring"></div>
+          <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-500 p-1 shadow-2xl shadow-amber-500/30 flex items-center justify-center relative">
+            <div class="w-full h-full bg-slate-950 rounded-[22px] flex flex-col items-center justify-center p-3 text-center">
+              <svg class="w-12 h-12 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L3.5 7v10L12 22l8.5-5V7L12 2zm0 2.31l6.5 3.82v7.74L12 19.69l-6.5-3.82V8.13L12 4.31z" fill-rule="evenodd"/>
+                <polygon points="12,7 16,9.3 16,14.7 12,17 8,14.7 8,9.3" fill="#F59E0B"/>
+                <polygon points="12,9 14.5,10.4 14.5,13.6 12,15 9.5,13.6 9.5,10.4" fill="#0F172A"/>
+                <circle cx="12" cy="12" r="1.5" fill="#FBBF24"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pill Badges -->
+        <div class="flex items-center justify-center gap-2 mb-4">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-amber-100 text-amber-900 border border-amber-300 shadow-sm">
+            <span>🐝</span> ESEN HIVE CLUB
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">
+            University of Manouba
+          </span>
+        </div>
+
+        <!-- Main Headline -->
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-950 tracking-tight leading-tight">
+          Welcome to <span class="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 bg-clip-text text-transparent">ESEN HIVE CLUB</span> Contest
+        </h1>
+
+        <!-- Subheading -->
+        <p class="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          The official competitive programming arena of ESEN Hive Club. Please sign in with your team credentials to unlock the live contest problemset, embedded statements, and submission evaluations.
+        </p>
+
+        <!-- CTA Action Buttons -->
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <button onclick="toggleAuthModal(true)" class="px-7 py-3.5 rounded-2xl text-sm font-extrabold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-xl shadow-amber-500/25 active:scale-[0.98] transition-all flex items-center gap-2.5">
+            <svg class="w-5 h-5 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+            </svg>
+            <span>Team Sign In</span>
+          </button>
+          
+          <button onclick="fillDemoAndLogin()" class="px-6 py-3.5 rounded-2xl text-sm font-bold bg-white text-slate-700 border border-slate-200 hover:border-amber-400 hover:text-amber-700 shadow-sm active:scale-[0.98] transition-all flex items-center gap-2">
+            <span>⚡ Quick Demo Sign In</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Bento Grid Features (React Bits Spotlight Cards) -->
+      <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-5 mt-4">
+        
+        <!-- Bento 1 -->
+        <div class="spotlight-card rounded-2xl p-5 border border-slate-200">
+          <div class="spotlight-card-content flex flex-col h-full">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-4">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900 mb-1">4-Core Dedicated Judgehosts</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">
+              Submissions run in isolated Linux cgroup v2 sandbox containers pinned to physical CPU cores with sub-second verdict turnarounds.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bento 2 -->
+        <div class="spotlight-card rounded-2xl p-5 border border-slate-200">
+          <div class="spotlight-card-content flex flex-col h-full">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-4">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900 mb-1">Polyglot Compiler Runtimes</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">
+              Full support for C++20, PyPy3 (Python 3 JIT), Java 21, Rust, Go, Kotlin, and Node.js with native memory and time profiling.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bento 3 -->
+        <div class="spotlight-card rounded-2xl p-5 border border-slate-200">
+          <div class="spotlight-card-content flex flex-col h-full">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-4">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900 mb-1">Protected Contest Arena</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">
+              Problem statements, submissions, and live scoreboards are exclusively available to authenticated contest teams.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer Info -->
+      <div class="mt-12 text-center text-xs text-slate-400 font-medium">
+        <span>Hosted by ESEN Hive Club • Powered by DOMjudge v9.0.1 Engine</span>
+      </div>
+
+    </section>
+
+    <!-- ================= PROTECTED VIEW 1: WORKSPACE (SPLIT VIEW) ================= -->
+    <section id="view-workspace" class="hidden flex-1 grid grid-cols-12 gap-6 h-[calc(100vh-130px)] min-h-[640px]">
+      
+      <!-- Problem Rail (Left Column - 3 cols) -->
+      <aside class="col-span-12 lg:col-span-3 flex flex-col spotlight-card rounded-2xl p-4 overflow-hidden">
+        <div class="spotlight-card-content flex flex-col h-full">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+            <div>
+              <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Problem Set</h2>
+              <p class="text-xs text-slate-500">Select a problem to view & submit</p>
+            </div>
+            <span id="problems-count-pill" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 font-mono">0 problems</span>
+          </div>
+
+          <!-- Problem List Rail -->
+          <div id="problem-list" class="flex-1 overflow-y-auto space-y-2 pr-1">
+            <!-- Populated via JS -->
+            <div class="text-center py-10 text-slate-400 text-xs animate-pulse">Loading problems from contest...</div>
+          </div>
+
+          <!-- Quick Tips footer -->
+          <div class="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
+            <span>ESEN HIVE CLUB Arena</span>
+            <span class="flex items-center gap-1 font-medium text-emerald-600">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 4 Judgehosts Online
+            </span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center Statement Viewer (Middle Column - 5 cols) -->
+      <section class="col-span-12 lg:col-span-5 flex flex-col spotlight-card rounded-2xl p-4 overflow-hidden">
+        <div class="spotlight-card-content flex flex-col h-full">
+          
+          <!-- Statement Header Bar -->
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2.5">
+              <div id="active-prob-letter-badge" class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-mono font-bold text-sm shadow-sm bg-indigo-600">
+                A
+              </div>
+              <div>
+                <h3 id="active-prob-title" class="text-sm font-bold text-slate-900 leading-tight">Problem Statement</h3>
+                <div class="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                  <span id="active-prob-timelimit" class="font-mono tabular-nums text-slate-600">Time limit: 1.0s</span>
+                  <span class="text-slate-300">•</span>
+                  <span class="font-mono tabular-nums text-slate-600">Memory limit: 512MB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- PDF Controls -->
+            <div class="flex items-center gap-1.5">
+              <button onclick="refreshPdf()" title="Reload Statement" class="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              </button>
+              <a id="btn-open-pdf" href="#" target="_blank" title="Open PDF in new tab" class="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Embedded PDF Frame -->
+          <div class="flex-1 bg-slate-100 rounded-xl overflow-hidden relative border border-slate-200">
+            <iframe id="pdf-viewer-frame" class="w-full h-full border-0" src="about:blank"></iframe>
+            <div id="pdf-viewer-placeholder" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-slate-50">
+              <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p class="text-sm font-semibold text-slate-600">Select a problem to render the PDF statement</p>
+              <p class="text-xs text-slate-400 mt-1">PDF statement directly loaded from DOMjudge problem package</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Right Quick Submit Panel (Right Column - 4 cols) -->
+      <section class="col-span-12 lg:col-span-4 flex flex-col spotlight-card rounded-2xl p-4 overflow-hidden">
+        <div class="spotlight-card-content flex flex-col h-full">
+          
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Quick Submit</h3>
+              <p class="text-xs text-slate-500">Submit solution for <span id="submit-prob-name" class="font-bold text-amber-600">Problem A</span></p>
+            </div>
+            <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              <button onclick="setSubmitMode('paste')" id="mode-paste-btn" class="px-2.5 py-1 rounded text-xs font-semibold bg-white text-amber-700 shadow-sm transition-all">Paste</button>
+              <button onclick="setSubmitMode('file')" id="mode-file-btn" class="px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 transition-all">File</button>
+            </div>
+          </div>
+
+          <!-- Language Selector -->
+          <div class="mb-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Programming Language</label>
+            <select id="select-language" onchange="onLanguageChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+              <option value="cpp">C++ (g++)</option>
+              <option value="python3">Python 3 (PyPy3)</option>
+              <option value="java">Java (OpenJDK)</option>
+              <option value="rust">Rust (rustc)</option>
+              <option value="kotlin">Kotlin (kotlinc)</option>
+              <option value="javascript">JavaScript (Node.js)</option>
+              <option value="go">Go (golang)</option>
+              <option value="c">C (gcc)</option>
+              <option value="csharp">C# (Mono)</option>
+            </select>
+          </div>
+
+          <!-- Entry Point field (hidden by default unless required like Java/Kotlin) -->
+          <div id="entry-point-container" class="hidden mb-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Main Class / Entry Point <span class="text-rose-500">*</span></label>
+            <input type="text" id="input-entry-point" placeholder="e.g. Solution or Main" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+          </div>
+
+          <!-- Mode A: Paste Code Textarea -->
+          <div id="paste-input-container" class="flex-1 flex flex-col mb-3">
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-semibold text-slate-600">Source Code</label>
+              <span id="code-stats" class="text-[11px] font-mono tabular-nums text-slate-400">0 lines • 0 chars</span>
+            </div>
+            <textarea id="code-paste-area" oninput="updateCodeStats()" placeholder="// Paste your solution code here...&#10;#include <iostream>&#10;int main() {&#10;    std::cout << &quot;Hello ESEN HIVE!&quot; << std::endl;&#10;    return 0;&#10;}" class="flex-1 w-full p-3 font-mono text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none leading-relaxed"></textarea>
+          </div>
+
+          <!-- Mode B: File Drag & Drop Zone -->
+          <div id="file-input-container" class="hidden flex-1 flex flex-col mb-3">
+            <label class="text-xs font-semibold text-slate-600 mb-1">Upload Solution File</label>
+            <div id="drop-zone" class="flex-1 border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-amber-400 hover:bg-amber-50/20 transition-all cursor-pointer relative">
+              <input type="file" id="file-input" onchange="handleFileSelect(this.files)" class="absolute inset-0 opacity-0 cursor-pointer">
+              <svg class="w-10 h-10 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <span id="drop-file-label" class="text-xs font-bold text-slate-700">Choose a file or drag it here</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">Supports .cpp, .py, .java, .rs, .kt, .js, .go, .c, .cs</span>
+              <span id="selected-file-chip" class="hidden mt-3 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-amber-50 text-amber-800 border border-amber-200"></span>
+            </div>
+          </div>
+
+          <!-- Submit Button Action Bar -->
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+            <button onclick="clearSubmitForm()" class="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors">Clear</button>
+            <button id="btn-submit" onclick="submitSolution()" class="flex-1 py-2.5 px-4 rounded-xl text-xs font-extrabold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-md shadow-amber-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+              <svg id="submit-spinner" class="hidden w-4 h-4 text-slate-950 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span id="submit-btn-text">Submit Solution</span>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+    </section>
+
+    <!-- ================= PROTECTED VIEW 2: SUBMISSIONS & VERDICT FEED ================= -->
+    <section id="view-submissions" class="hidden flex-1 flex flex-col spotlight-card rounded-2xl p-6 overflow-hidden">
+      <div class="spotlight-card-content flex flex-col h-full">
+        
+        <!-- Submissions Top Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100">
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Submissions & Verdicts</h2>
+            <p class="text-xs text-slate-500">Live feed auto-polled every 3 seconds across 4 judgehosts</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span id="submission-poll-indicator" class="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Auto-sync active
+            </span>
+            <button onclick="fetchSubmissions(true)" class="p-2 rounded-xl text-slate-600 hover:text-amber-700 hover:bg-amber-50 border border-slate-200 transition-colors" title="Manual refresh">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submissions Table -->
+        <div class="flex-1 overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+                <th class="py-3 px-4"># ID</th>
+                <th class="py-3 px-4">Time</th>
+                <th class="py-3 px-4">Problem</th>
+                <th class="py-3 px-4">Language</th>
+                <th class="py-3 px-4">Verdict</th>
+                <th class="py-3 px-4">Runtime</th>
+                <th class="py-3 px-4 text-right">Team</th>
+              </tr>
+            </thead>
+            <tbody id="submissions-tbody" class="divide-y divide-slate-100 font-medium">
+              <tr>
+                <td colspan="7" class="text-center py-12 text-slate-400">Loading submissions...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= PROTECTED VIEW 3: LIVE SCOREBOARD ================= -->
+    <section id="view-scoreboard" class="hidden flex-1 flex flex-col spotlight-card rounded-2xl p-6 overflow-hidden">
+      <div class="spotlight-card-content flex flex-col h-full">
+        
+        <!-- Scoreboard Controls & Stats -->
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100">
+          <div class="flex items-center gap-3">
+            <div>
+              <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Contest Scoreboard</h2>
+              <p class="text-xs text-slate-500 font-mono" id="scoreboard-updated-time">Last updated: Just now</p>
+            </div>
+            <span id="scoreboard-freeze-pill" class="hidden px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+              Scoreboard Frozen
+            </span>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <div class="hidden sm:flex items-center gap-3 text-xs">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-500"></span> First Solved</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-300"></span> Solved</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-100 border border-rose-300"></span> Attempted</span>
+            </div>
+
+            <button onclick="fetchScoreboard(true)" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:border-amber-400 hover:text-amber-700 transition-colors flex items-center gap-1.5 active:scale-[0.98]">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Scoreboard Table -->
+        <div class="flex-1 overflow-auto rounded-xl border border-slate-200 bg-white">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="sticky top-0 bg-slate-50/95 backdrop-blur z-20 shadow-sm border-b border-slate-200">
+              <tr id="scoreboard-thead-row" class="text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                <th class="py-3 px-3 text-center w-12">#</th>
+                <th class="py-3 px-4 min-w-[200px]">Team</th>
+                <th class="py-3 px-3 text-center w-16">Solved</th>
+                <th class="py-3 px-3 text-center w-20">Time</th>
+              </tr>
+            </thead>
+            <tbody id="scoreboard-tbody" class="divide-y divide-slate-100 font-medium">
+              <tr>
+                <td colspan="10" class="text-center py-16 text-slate-400">Loading scoreboard data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= PROTECTED VIEW 4: CLARIFICATIONS ================= -->
+    <section id="view-clarifications" class="hidden flex-1 flex flex-col spotlight-card rounded-2xl p-6 overflow-hidden">
+      <div class="spotlight-card-content flex flex-col h-full">
+        
+        <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Clarifications & Announcements</h2>
+            <p class="text-xs text-slate-500">Ask questions directly to the Jury or review general contest updates</p>
+          </div>
+
+          <button onclick="openClarificationModal()" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-sm active:scale-[0.98] transition-all flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+            Ask Clarification
+          </button>
+        </div>
+
+        <!-- Clarifications Feed -->
+        <div id="clarifications-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
+          <div class="text-center py-12 text-slate-400 text-xs">No clarifications yet.</div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= AUTH MODAL ================= -->
+  <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 spotlight-card overflow-hidden">
+      <div class="spotlight-card-content">
+        
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-sm shadow-sm">
+              <svg class="w-5 h-5 text-slate-950" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L3.5 7v10L12 22l8.5-5V7L12 2zm0 2.31l6.5 3.82v7.74L12 19.69l-6.5-3.82V8.13L12 4.31z"/>
+                <polygon points="12,7 16,9.3 16,14.7 12,17 8,14.7 8,9.3" fill="#0F172A"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Sign in to Contest</h3>
+              <p class="text-xs text-slate-500">Authenticate with your team credentials</p>
+            </div>
+          </div>
+          <button onclick="toggleAuthModal(false)" class="text-slate-400 hover:text-slate-600 p-1">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <form id="login-form" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Username</label>
+            <input type="text" id="login-username" required placeholder="e.g. demo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+            <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+          </div>
+
+          <div id="login-error-msg" class="hidden text-xs font-medium text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+            Invalid team username or password.
+          </div>
+
+          <!-- Quick Fill Demo Credentials -->
+          <div class="bg-amber-50/80 border border-amber-200 p-3 rounded-xl flex items-center justify-between text-xs">
+            <div>
+              <span class="font-bold text-amber-950">Demo Team:</span>
+              <span class="font-mono text-amber-800 ml-1">demo / demo</span>
+            </div>
+            <button type="button" onclick="fillDemoCreds()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-600 transition-colors shadow-sm">
+              Auto Fill
+            </button>
+          </div>
+
+          <div class="pt-2 flex items-center gap-3">
+            <button type="button" onclick="toggleAuthModal(false)" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+              Cancel
+            </button>
+            <button type="submit" id="login-submit-btn" class="flex-1 py-2.5 rounded-xl text-xs font-extrabold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-md shadow-amber-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5">
+              <span>Sign In</span>
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ASK CLARIFICATION MODAL ================= -->
+  <div id="clarification-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 spotlight-card overflow-hidden">
+      <div class="spotlight-card-content">
+        
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-sm">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Request Clarification</h3>
+              <p class="text-xs text-slate-500">Submit a query to the contest jury</p>
+            </div>
+          </div>
+          <button onclick="closeClarificationModal()" class="text-slate-400 hover:text-slate-600 p-1">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <form id="clarification-form" onsubmit="handleClarificationSubmit(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Subject / Problem</label>
+            <select id="clarification-prob-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+              <option value="">General Contest Issue</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Question Description</label>
+            <textarea id="clarification-text" rows="4" required placeholder="Type your inquiry for the jury..." class="w-full p-3 font-sans text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none leading-relaxed"></textarea>
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-3">
+            <button type="button" onclick="closeClarificationModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+              Cancel
+            </button>
+            <button type="submit" id="clarification-submit-btn" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-sm active:scale-[0.98] transition-all">
+              Send to Jury
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT APP LOGIC ================= -->
+  <script>
+    // Global Application State
+    const state = {
+      user: null,               // { username, name, team, team_id, roles, authHeader }
+      contest: null,            // Contest details from /api/v4/contests
+      problems: [],             // Problems array
+      selectedProblem: null,    // Currently selected problem object
+      languages: [],            // Enabled submission languages
+      teams: {},                // team_id -> team object
+      submissions: [],          // Submissions list
+      judgements: {},           // submit_id -> judgement object
+      scoreboard: null,         // Raw scoreboard
+      clarifications: [],       // Clarifications
+      activeTab: 'workspace',   // 'workspace', 'submissions', 'scoreboard', 'clarifications'
+      submitMode: 'paste',      // 'paste' or 'file'
+      selectedFile: null,       // File object if submitMode === 'file'
+      pollInterval: null,       // Polling timer
+    };
+
+    // Initialize Lenis Smooth Scroll
+    let lenis;
+    try {
+      lenis = new Lenis({
+        duration: 0.8,
+        smoothWheel: true,
+      });
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+    } catch (e) {
+      console.warn('Lenis scroll initialization note:', e);
+    }
+
+    // Initialize Spotlight Card mouse-following effect
+    function initSpotlights() {
+      document.querySelectorAll('.spotlight-card').forEach(card => {
+        card.addEventListener('pointermove', (e) => {
+          const rect = card.getBoundingClientRect();
+          card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+          card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+        });
+      });
+    }
+
+    // Auth Helper
+    function getAuthHeaders() {
+      const headers = {};
+      if (state.user && state.user.authHeader) {
+        headers['Authorization'] = state.user.authHeader;
+      }
+      return headers;
+    }
+
+    // API Fetch Wrapper
+    async function apiRequest(path, options = {}) {
+      options.headers = {
+        ...options.headers,
+        ...getAuthHeaders()
+      };
+      const res = await fetch(`/api/v4${path}`, options);
+      if (res.status === 401) {
+        if (state.user) {
+          showToast('Session expired or unauthorized. Please re-login.', 'warning');
+          logout();
+        }
+      }
+      return res;
+    }
+
+    // Toast Notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        warning: 'bg-amber-500 text-slate-950 font-bold',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-slate-900 text-white'
+      };
+      
+      toast.className = `${colors[type] || colors.info} pointer-events-auto px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg shadow-black/10 flex items-center gap-2 transform translate-y-4 opacity-0 transition-all duration-200`;
+      toast.innerHTML = `<span>${message}</span>`;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      }, 10);
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-4', 'opacity-0');
+        setTimeout(() => toast.remove(), 250);
+      }, 3500);
+    }
+
+    // Handle Brand Logo click
+    function handleBrandClick() {
+      if (state.user) {
+        switchTab('workspace');
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // Bootstrap Application
+    async function initApp() {
+      // 1. Restore auth state from sessionStorage
+      const savedUser = sessionStorage.getItem('dj_user');
+      if (savedUser) {
+        try {
+          state.user = JSON.parse(savedUser);
+        } catch (e) {
+          sessionStorage.removeItem('dj_user');
+        }
+      }
+
+      initSpotlights();
+
+      // 2. Fetch Active Contest
+      await fetchContest();
+
+      if (state.contest) {
+        // Start countdown timer loop
+        setInterval(updateCountdownClock, 1000);
+        updateCountdownClock();
+
+        // If user is already authenticated, fetch private contest data
+        if (state.user) {
+          await loadAuthenticatedContestData();
+        }
+
+        // Start polling loop
+        startPolling();
+      }
+
+      // Update UI to reflect whether guest or authenticated team
+      updateUserUI();
+
+      // GSAP Entrance
+      if (window.gsap) {
+        gsap.from('header', { y: -30, opacity: 0, duration: 0.6, ease: 'power2.out' });
+        if (!state.user) {
+          gsap.from('#view-landing > *', { y: 25, opacity: 0, stagger: 0.12, duration: 0.6, ease: 'power2.out' });
+        }
+      }
+    }
+
+    // Load private contest data when authenticated
+    async function loadAuthenticatedContestData() {
+      await Promise.all([
+        fetchProblems(),
+        fetchLanguages(),
+        fetchTeams(),
+        fetchSubmissions(),
+        fetchClarifications(),
+        fetchScoreboard()
+      ]);
+    }
+
+    // Contest Details Fetch
+    async function fetchContest() {
+      try {
+        const res = await apiRequest('/contests');
+        if (!res.ok) throw new Error('Failed to fetch contests');
+        const contests = await res.json();
+        
+        if (contests && contests.length > 0) {
+          state.contest = contests.find(c => c.id === 'demo' || c.shortname === 'demo') || contests[0];
+          
+          if (state.contest.scoreboard_freeze_duration) {
+            document.getElementById('freeze-pill').title = `Frozen in the final ${state.contest.scoreboard_freeze_duration}`;
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching contest:', err);
+      }
+    }
+
+    // Countdown Clock Calculation
+    function updateCountdownClock() {
+      if (!state.contest || !state.contest.start_time || !state.contest.end_time) return;
+
+      const now = new Date();
+      const start = new Date(state.contest.start_time);
+      const end = new Date(state.contest.end_time);
+
+      const clockEl = document.getElementById('countdown-timer');
+      const timeInfoEl = document.getElementById('contest-time-info');
+      const freezePill = document.getElementById('freeze-pill');
+
+      if (now < start) {
+        const diff = Math.max(0, Math.floor((start - now) / 1000));
+        clockEl.textContent = `Starts in ${formatSeconds(diff)}`;
+        timeInfoEl.textContent = `Starts at ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        return;
+      }
+
+      if (now >= end) {
+        clockEl.textContent = 'CONTEST ENDED';
+        clockEl.classList.add('text-rose-600');
+        timeInfoEl.textContent = 'Ended';
+        return;
+      }
+
+      const remainingSec = Math.max(0, Math.floor((end - now) / 1000));
+      const elapsedSec = Math.floor((now - start) / 1000);
+
+      clockEl.textContent = formatSeconds(remainingSec);
+      timeInfoEl.textContent = `${formatSeconds(elapsedSec)} / ${formatSeconds(Math.floor((end - start) / 1000))}`;
+
+      if (state.contest.scoreboard_freeze_duration) {
+        const freezeParts = state.contest.scoreboard_freeze_duration.split(':');
+        let freezeSeconds = 3600;
+        if (freezeParts.length === 3) {
+          freezeSeconds = parseInt(freezeParts[0]) * 3600 + parseInt(freezeParts[1]) * 60 + parseFloat(freezeParts[2]);
+        }
+        if (remainingSec <= freezeSeconds) {
+          freezePill.classList.remove('hidden');
+          clockEl.classList.add('text-amber-600');
+          document.getElementById('scoreboard-freeze-pill').classList.remove('hidden');
+        } else {
+          freezePill.classList.add('hidden');
+          clockEl.classList.remove('text-amber-600');
+          document.getElementById('scoreboard-freeze-pill').classList.add('hidden');
+        }
+      }
+    }
+
+    function formatSeconds(totalSec) {
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    // Fetch Problems
+    async function fetchProblems() {
+      if (!state.contest || !state.user) return;
+      try {
+        const res = await apiRequest(`/contests/${state.contest.id}/problems`);
+        if (!res.ok) throw new Error('Failed to load problems');
+        state.problems = await res.json();
+        
+        document.getElementById('problems-count-pill').textContent = `${state.problems.length} problems`;
+        
+        renderProblemRail();
+
+        const clarSelect = document.getElementById('clarification-prob-select');
+        clarSelect.innerHTML = `<option value="">General Contest Issue</option>` +
+          state.problems.map(p => `<option value="${p.id}">Problem ${p.label}: ${p.name}</option>`).join('');
+
+        if (state.problems.length > 0 && !state.selectedProblem) {
+          selectProblem(state.problems[0].id);
+        }
+      } catch (err) {
+        console.error('Error loading problems:', err);
+      }
+    }
+
+    // Render Problem Rail
+    function renderProblemRail() {
+      const container = document.getElementById('problem-list');
+      if (state.problems.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">No problems found in contest.</div>`;
+        return;
+      }
+
+      container.innerHTML = state.problems.map(p => {
+        const isSelected = state.selectedProblem && state.selectedProblem.id === p.id;
+        const color = p.rgb || '#F59E0B';
+        const isSolved = checkIfSolved(p.id);
+
+        return `
+          <div onclick="selectProblem('${p.id}')" class="p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+            isSelected 
+              ? 'bg-amber-50/70 border-amber-300 shadow-sm' 
+              : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'
+          }">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs text-white shrink-0 shadow-sm" style="background-color: ${color}">
+                ${p.label || p.short_name}
+              </div>
+              <div class="truncate">
+                <div class="text-xs font-bold ${isSelected ? 'text-amber-950' : 'text-slate-900'} truncate">${p.name}</div>
+                <div class="text-[11px] font-mono text-slate-400 tabular-nums">Limit: ${p.time_limit}s</div>
+              </div>
+            </div>
+
+            <div class="shrink-0 flex items-center gap-1.5">
+              ${isSolved ? `
+                <span title="Solved by your team!" class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-[10px]">
+                  ✓
+                </span>
+              ` : ''}
+              <span class="w-2.5 h-2.5 rounded-full shadow-sm" style="background-color: ${color}"></span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function checkIfSolved(problemId) {
+      if (!state.user || !state.user.team_id || !state.scoreboard || !state.scoreboard.rows) return false;
+      const teamRow = state.scoreboard.rows.find(r => r.team_id === state.user.team_id);
+      if (!teamRow) return false;
+      const prob = teamRow.problems.find(p => p.problem_id === problemId);
+      return prob && prob.solved;
+    }
+
+    // Select Problem
+    function selectProblem(problemId) {
+      const prob = state.problems.find(p => p.id === problemId);
+      if (!prob) return;
+      state.selectedProblem = prob;
+
+      const badge = document.getElementById('active-prob-letter-badge');
+      badge.textContent = prob.label || prob.short_name;
+      badge.style.backgroundColor = prob.rgb || '#F59E0B';
+      document.getElementById('active-prob-title').textContent = `Problem ${prob.label}: ${prob.name}`;
+      document.getElementById('active-prob-timelimit').textContent = `Time limit: ${prob.time_limit}s`;
+      
+      document.getElementById('submit-prob-name').textContent = `Problem ${prob.label}: ${prob.name}`;
+
+      const pdfUrl = `/api/v4/contests/${state.contest.id}/problems/${prob.id}/statement`;
+      const frame = document.getElementById('pdf-viewer-frame');
+      const placeholder = document.getElementById('pdf-viewer-placeholder');
+      const openPdfBtn = document.getElementById('btn-open-pdf');
+
+      placeholder.classList.add('hidden');
+      frame.src = pdfUrl;
+      openPdfBtn.href = pdfUrl;
+
+      renderProblemRail();
+    }
+
+    function refreshPdf() {
+      if (state.selectedProblem) {
+        selectProblem(state.selectedProblem.id);
+        showToast('Refreshed problem statement.', 'info');
+      }
+    }
+
+    // Fetch Enabled Languages
+    async function fetchLanguages() {
+      if (!state.contest || !state.user) return;
+      try {
+        const res = await apiRequest(`/contests/${state.contest.id}/languages`);
+        if (!res.ok) throw new Error('Failed to load languages');
+        state.languages = await res.json();
+
+        const select = document.getElementById('select-language');
+        select.innerHTML = state.languages.map(l => {
+          let extra = '';
+          if (l.id === 'python3') extra = ' (PyPy3)';
+          return `<option value="${l.id}">${l.name}${extra}</option>`;
+        }).join('');
+
+        onLanguageChange();
+      } catch (err) {
+        console.error('Error fetching languages:', err);
+      }
+    }
+
+    function onLanguageChange() {
+      const langId = document.getElementById('select-language').value;
+      const lang = state.languages.find(l => l.id === langId);
+      const entryContainer = document.getElementById('entry-point-container');
+      
+      if (lang && lang.entry_point_required) {
+        entryContainer.classList.remove('hidden');
+        document.getElementById('input-entry-point').placeholder = lang.entry_point_name || 'Main class';
+      } else {
+        entryContainer.classList.add('hidden');
+      }
+    }
+
+    // Submission Form Modes
+    function setSubmitMode(mode) {
+      state.submitMode = mode;
+      const pasteBtn = document.getElementById('mode-paste-btn');
+      const fileBtn = document.getElementById('mode-file-btn');
+      const pasteContainer = document.getElementById('paste-input-container');
+      const fileContainer = document.getElementById('file-input-container');
+
+      if (mode === 'paste') {
+        pasteBtn.className = 'px-2.5 py-1 rounded text-xs font-semibold bg-white text-amber-700 shadow-sm transition-all';
+        fileBtn.className = 'px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 transition-all';
+        pasteContainer.classList.remove('hidden');
+        fileContainer.classList.add('hidden');
+      } else {
+        fileBtn.className = 'px-2.5 py-1 rounded text-xs font-semibold bg-white text-amber-700 shadow-sm transition-all';
+        pasteBtn.className = 'px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 transition-all';
+        fileContainer.classList.remove('hidden');
+        pasteContainer.classList.add('hidden');
+      }
+    }
+
+    function updateCodeStats() {
+      const text = document.getElementById('code-paste-area').value;
+      const lines = text ? text.split('\n').length : 0;
+      const chars = text.length;
+      document.getElementById('code-stats').textContent = `${lines} lines • ${chars} chars`;
+    }
+
+    function handleFileSelect(files) {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      state.selectedFile = file;
+      const chip = document.getElementById('selected-file-chip');
+      chip.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      chip.classList.remove('hidden');
+      document.getElementById('drop-file-label').textContent = 'Selected:';
+    }
+
+    function clearSubmitForm() {
+      document.getElementById('code-paste-area').value = '';
+      document.getElementById('file-input').value = '';
+      state.selectedFile = null;
+      document.getElementById('selected-file-chip').classList.add('hidden');
+      document.getElementById('drop-file-label').textContent = 'Choose a file or drag it here';
+      updateCodeStats();
+    }
+
+    // SUBMIT SOLUTION
+    async function submitSolution() {
+      if (!state.user) {
+        showToast('Please sign in with your team credentials first.', 'warning');
+        toggleAuthModal(true);
+        return;
+      }
+
+      if (!state.selectedProblem) {
+        showToast('Please select a problem first.', 'warning');
+        return;
+      }
+
+      const langId = document.getElementById('select-language').value;
+      const lang = state.languages.find(l => l.id === langId);
+      const entryPoint = document.getElementById('input-entry-point').value.trim();
+
+      if (lang && lang.entry_point_required && !entryPoint) {
+        showToast(`Please specify entry point (${lang.entry_point_name || 'Main class'}).`, 'warning');
+        document.getElementById('input-entry-point').focus();
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('problem', state.selectedProblem.id);
+      formData.append('language', langId);
+      if (entryPoint) {
+        formData.append('entry_point', entryPoint);
+      }
+
+      if (state.submitMode === 'paste') {
+        const code = document.getElementById('code-paste-area').value.trim();
+        if (!code) {
+          showToast('Please enter your solution code.', 'warning');
+          return;
+        }
+
+        let ext = 'cpp';
+        if (lang && lang.extensions && lang.extensions.length > 0) {
+          ext = lang.extensions[0];
+        }
+        const blob = new Blob([code], { type: 'text/plain' });
+        formData.append('code[]', blob, `solution.${ext}`);
+      } else {
+        if (!state.selectedFile) {
+          showToast('Please choose a file to upload.', 'warning');
+          return;
+        }
+        formData.append('code[]', state.selectedFile, state.selectedFile.name);
+      }
+
+      const btn = document.getElementById('btn-submit');
+      const spinner = document.getElementById('submit-spinner');
+      const btnText = document.getElementById('submit-btn-text');
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      btnText.textContent = 'Submitting...';
+
+      try {
+        const res = await apiRequest(`/contests/${state.contest.id}/submissions`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({ message: res.statusText }));
+          throw new Error(errData.message || 'Submission failed');
+        }
+
+        const submission = await res.json();
+        showToast(`Submitted successfully! ID #${submission.id}`, 'success');
+
+        clearSubmitForm();
+        await fetchSubmissions(true);
+        switchTab('submissions');
+
+      } catch (err) {
+        console.error('Submit error:', err);
+        showToast(err.message || 'Submission error. Check requirements.', 'error');
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        btnText.textContent = 'Submit Solution';
+      }
+    }
+
+    // Fetch Teams
+    async function fetchTeams() {
+      if (!state.contest || !state.user) return;
+      try {
+        const res = await apiRequest(`/contests/${state.contest.id}/teams`);
+        if (!res.ok) return;
+        const teams = await res.json();
+        state.teams = {};
+        teams.forEach(t => {
+          state.teams[t.id] = t;
+        });
+      } catch (err) {
+        console.error('Error fetching teams:', err);
+      }
+    }
+
+    // Fetch Submissions & Judgements
+    async function fetchSubmissions(forceRefresh = false) {
+      if (!state.contest || !state.user) return;
+      try {
+        const [subRes, judgeRes] = await Promise.all([
+          apiRequest(`/contests/${state.contest.id}/submissions`),
+          apiRequest(`/contests/${state.contest.id}/judgements`)
+        ]);
+
+        if (subRes.ok) {
+          state.submissions = await subRes.json();
+          state.submissions.sort((a, b) => new Date(b.time) - new Date(a.time));
+        }
+
+        if (judgeRes.ok) {
+          const judgements = await judgeRes.json();
+          state.judgements = {};
+          judgements.forEach(j => {
+            state.judgements[j.submission_id] = j;
+          });
+        }
+
+        renderSubmissionsTable();
+
+        const badge = document.getElementById('submissions-count-badge');
+        if (state.submissions.length > 0) {
+          badge.textContent = state.submissions.length;
+          badge.classList.remove('hidden');
+        }
+
+      } catch (err) {
+        console.error('Error loading submissions:', err);
+      }
+    }
+
+    // Render Submissions Table
+    function renderSubmissionsTable() {
+      const tbody = document.getElementById('submissions-tbody');
+      if (state.submissions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-slate-400">No submissions found yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = state.submissions.map(s => {
+        const prob = state.problems.find(p => p.id === s.problem_id);
+        const team = state.teams[s.team_id] || { name: s.team_id };
+        const judge = state.judgements[s.id];
+        
+        let verdictBadge = '';
+        let runtime = '—';
+
+        if (!judge) {
+          verdictBadge = `
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-spin"></span> Judging
+            </span>
+          `;
+        } else {
+          runtime = judge.max_run_time !== null ? `${judge.max_run_time.toFixed(3)}s` : '—';
+          const type = judge.judgement_type_id || 'PENDING';
+          
+          if (type === 'AC') {
+            verdictBadge = `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+                ACCEPTED
+              </span>
+            `;
+          } else if (type === 'WA') {
+            verdictBadge = `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                WRONG ANSWER
+              </span>
+            `;
+          } else if (type === 'TLE') {
+            verdictBadge = `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                TIME LIMIT EXCEEDED
+              </span>
+            `;
+          } else if (type === 'CE') {
+            verdictBadge = `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                COMPILER ERROR
+              </span>
+            `;
+          } else {
+            verdictBadge = `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                ${type}
+              </span>
+            `;
+          }
+        }
+
+        const date = new Date(s.time);
+        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const probColor = prob ? (prob.rgb || '#F59E0B') : '#94A3B8';
+        const probLabel = prob ? (prob.label || prob.short_name) : '?';
+        const probName = prob ? prob.name : s.problem_id;
+
+        return `
+          <tr class="hover:bg-slate-50/70 transition-colors">
+            <td class="py-3 px-4 font-mono font-bold text-slate-900 tabular-nums">#${s.id}</td>
+            <td class="py-3 px-4 text-slate-500 font-mono tabular-nums">${timeStr}</td>
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-2">
+                <span class="w-5 h-5 rounded flex items-center justify-center text-white font-mono font-bold text-[10px] shadow-sm shrink-0" style="background-color: ${probColor}">
+                  ${probLabel}
+                </span>
+                <span class="font-semibold text-slate-800 truncate max-w-[150px]">${probName}</span>
+              </div>
+            </td>
+            <td class="py-3 px-4 font-mono uppercase text-slate-600">${s.language_id}</td>
+            <td class="py-3 px-4">${verdictBadge}</td>
+            <td class="py-3 px-4 font-mono tabular-nums text-slate-600">${runtime}</td>
+            <td class="py-3 px-4 text-right font-semibold text-slate-800">${team.name || s.team_id}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Fetch Scoreboard
+    async function fetchScoreboard(force = false) {
+      if (!state.contest || !state.user) return;
+      try {
+        const res = await apiRequest(`/contests/${state.contest.id}/scoreboard`);
+        if (!res.ok) return;
+        state.scoreboard = await res.json();
+
+        document.getElementById('scoreboard-updated-time').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        renderScoreboardTable();
+      } catch (err) {
+        console.error('Error fetching scoreboard:', err);
+      }
+    }
+
+    // Render Scoreboard
+    function renderScoreboardTable() {
+      if (!state.scoreboard || !state.scoreboard.rows) return;
+
+      const theadRow = document.getElementById('scoreboard-thead-row');
+      const tbody = document.getElementById('scoreboard-tbody');
+
+      let headerHtml = `
+        <th class="py-3 px-3 text-center w-12 font-mono">#</th>
+        <th class="py-3 px-4 min-w-[200px]">Team</th>
+        <th class="py-3 px-3 text-center w-16 font-mono">Solved</th>
+        <th class="py-3 px-3 text-center w-20 font-mono">Time</th>
+      `;
+
+      state.problems.forEach(p => {
+        const color = p.rgb || '#F59E0B';
+        headerHtml += `
+          <th class="py-2 px-2 text-center w-24">
+            <div class="flex flex-col items-center justify-center">
+              <span class="w-6 h-6 rounded flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm" style="background-color: ${color}">
+                ${p.label}
+              </span>
+              <span class="text-[10px] font-mono text-slate-400 mt-0.5 tabular-nums">${getProblemSolvedCount(p.id)}</span>
+            </div>
+          </th>
+        `;
+      });
+      theadRow.innerHTML = headerHtml;
+
+      if (state.scoreboard.rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${4 + state.problems.length}" class="text-center py-12 text-slate-400">Scoreboard is empty.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = state.scoreboard.rows.map(row => {
+        const team = state.teams[row.team_id] || { name: row.team_id, affiliation: '' };
+        const isCurrentTeam = state.user && state.user.team_id === row.team_id;
+
+        let rankBadge = `<span class="font-mono font-bold text-slate-600">${row.rank}</span>`;
+        if (row.rank === 1) rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center font-mono">1</span>`;
+        if (row.rank === 2) rankBadge = `<span class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center font-mono">2</span>`;
+        if (row.rank === 3) rankBadge = `<span class="w-6 h-6 rounded-full bg-orange-100 text-orange-800 font-bold flex items-center justify-center font-mono">3</span>`;
+
+        let rowHtml = `
+          <tr class="${isCurrentTeam ? 'bg-amber-50/70 font-semibold border-l-4 border-amber-500' : 'hover:bg-slate-50/70'} transition-colors">
+            <td class="py-3 px-3 text-center tabular-nums">${rankBadge}</td>
+            <td class="py-3 px-4">
+              <div class="font-bold text-slate-900">${team.name}</div>
+              <div class="text-[11px] text-slate-400 font-normal">${team.affiliation || ''}</div>
+            </td>
+            <td class="py-3 px-3 text-center font-mono font-bold text-slate-900 text-sm tabular-nums">${row.score.num_solved}</td>
+            <td class="py-3 px-3 text-center font-mono text-slate-500 tabular-nums">${row.score.total_time}</td>
+        `;
+
+        state.problems.forEach(p => {
+          const probData = row.problems.find(item => item.problem_id === p.id);
+          if (!probData || (probData.num_judged === 0 && probData.num_pending === 0)) {
+            rowHtml += `<td class="py-2 px-2 text-center text-slate-300 font-mono text-xs">—</td>`;
+          } else if (probData.first_to_solve) {
+            rowHtml += `
+              <td class="py-2 px-2 text-center">
+                <div class="icpc-first-solve rounded-lg py-1 px-1 flex flex-col items-center justify-center font-mono tabular-nums">
+                  <span class="font-bold text-xs flex items-center gap-0.5">★ ${probData.time}'</span>
+                  <span class="text-[10px] opacity-90">${probData.num_judged} tries</span>
+                </div>
+              </td>
+            `;
+          } else if (probData.solved) {
+            rowHtml += `
+              <td class="py-2 px-2 text-center">
+                <div class="icpc-solved rounded-lg py-1 px-1 flex flex-col items-center justify-center font-mono tabular-nums">
+                  <span class="font-bold text-xs">+${probData.num_judged}</span>
+                  <span class="text-[10px]">${probData.time}'</span>
+                </div>
+              </td>
+            `;
+          } else if (probData.num_pending > 0) {
+            rowHtml += `
+              <td class="py-2 px-2 text-center">
+                <div class="icpc-pending rounded-lg py-1 px-1 flex flex-col items-center justify-center font-mono tabular-nums">
+                  <span class="font-bold text-xs">?${probData.num_judged + probData.num_pending}</span>
+                  <span class="text-[10px]">pending</span>
+                </div>
+              </td>
+            `;
+          } else {
+            rowHtml += `
+              <td class="py-2 px-2 text-center">
+                <div class="icpc-failed rounded-lg py-1 px-1 flex flex-col items-center justify-center font-mono tabular-nums">
+                  <span class="font-bold text-xs">-${probData.num_judged}</span>
+                </div>
+              </td>
+            `;
+          }
+        });
+
+        rowHtml += `</tr>`;
+        return rowHtml;
+      }).join('');
+    }
+
+    function getProblemSolvedCount(probId) {
+      if (!state.scoreboard || !state.scoreboard.rows) return 0;
+      let count = 0;
+      state.scoreboard.rows.forEach(r => {
+        const p = r.problems.find(i => i.problem_id === probId);
+        if (p && p.solved) count++;
+      });
+      return count;
+    }
+
+    // Fetch Clarifications
+    async function fetchClarifications() {
+      if (!state.contest || !state.user) return;
+      try {
+        const res = await apiRequest(`/contests/${state.contest.id}/clarifications`);
+        if (!res.ok) return;
+        state.clarifications = await res.json();
+        
+        renderClarificationsList();
+
+        const badge = document.getElementById('clarifications-unread-badge');
+        if (state.clarifications.length > 0) {
+          badge.textContent = state.clarifications.length;
+          badge.classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Error fetching clarifications:', err);
+      }
+    }
+
+    function renderClarificationsList() {
+      const container = document.getElementById('clarifications-list');
+      if (state.clarifications.length === 0) {
+        container.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs">No announcements or clarifications yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = state.clarifications.map(c => {
+        const prob = state.problems.find(p => p.id === c.problem_id);
+        const probTitle = prob ? `Problem ${prob.label}: ${prob.name}` : 'General Contest Announcement';
+        const date = new Date(c.time);
+
+        return `
+          <div class="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">${probTitle}</span>
+              <span class="font-mono text-slate-400 tabular-nums">${date.toLocaleTimeString()}</span>
+            </div>
+            <div class="text-xs text-slate-800 whitespace-pre-wrap leading-relaxed">${c.body || c.text || ''}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openClarificationModal() {
+      if (!state.user) {
+        showToast('Please sign in to ask clarifications.', 'warning');
+        toggleAuthModal(true);
+        return;
+      }
+      document.getElementById('clarification-modal').classList.remove('hidden');
+      document.getElementById('clarification-modal').classList.add('flex');
+    }
+
+    function closeClarificationModal() {
+      document.getElementById('clarification-modal').classList.add('hidden');
+      document.getElementById('clarification-modal').classList.remove('flex');
+    }
+
+    async function handleClarificationSubmit(e) {
+      e.preventDefault();
+      const probId = document.getElementById('clarification-prob-select').value;
+      const text = document.getElementById('clarification-text').value.trim();
+
+      if (!text) return;
+
+      const payload = { text };
+      if (probId) payload.problemId = probId;
+
+      const btn = document.getElementById('clarification-submit-btn');
+      btn.disabled = true;
+
+      try {
+        const res = await apiRequest(`/contests/${state.contest.id}/clarifications`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error('Failed to submit clarification request');
+
+        showToast('Clarification sent to jury successfully.', 'success');
+        document.getElementById('clarification-text').value = '';
+        closeClarificationModal();
+        await fetchClarifications();
+      } catch (err) {
+        showToast(err.message || 'Could not send clarification.', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Tab Switching
+    function switchTab(tabName) {
+      if (!state.user) return; // Prevent guests from switching to internal tabs
+
+      state.activeTab = tabName;
+      ['workspace', 'submissions', 'scoreboard', 'clarifications'].forEach(t => {
+        const view = document.getElementById(`view-${t}`);
+        const tabBtn = document.getElementById(`tab-${t}`);
+        if (t === tabName) {
+          view.classList.remove('hidden');
+          tabBtn.className = 'nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 bg-white text-amber-700 shadow-sm';
+          if (window.gsap) {
+            gsap.fromTo(view, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' });
+          }
+        } else {
+          view.classList.add('hidden');
+          tabBtn.className = 'nav-tab px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition-all duration-150 flex items-center gap-1.5';
+        }
+      });
+
+      if (tabName === 'submissions') fetchSubmissions(true);
+      if (tabName === 'scoreboard') fetchScoreboard(true);
+      if (tabName === 'clarifications') fetchClarifications();
+    }
+
+    // Polling Loop
+    function startPolling() {
+      if (state.pollInterval) clearInterval(state.pollInterval);
+      state.pollInterval = setInterval(async () => {
+        if (!state.user) return;
+        const hasPending = state.submissions.some(s => !state.judgements[s.id]);
+        if (state.activeTab === 'submissions' || hasPending) {
+          await fetchSubmissions();
+        }
+        if (state.activeTab === 'scoreboard') {
+          await fetchScoreboard();
+        }
+      }, 3000);
+    }
+
+    // Auth Modal & Login Handling
+    function toggleAuthModal(show = true) {
+      const modal = document.getElementById('auth-modal');
+      if (show) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.getElementById('login-username').focus();
+      } else {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function fillDemoCreds() {
+      document.getElementById('login-username').value = 'demo';
+      document.getElementById('login-password').value = 'demo';
+    }
+
+    async function fillDemoAndLogin() {
+      fillDemoCreds();
+      const fakeEvent = { preventDefault: () => {} };
+      await handleLoginSubmit(fakeEvent);
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const user = document.getElementById('login-username').value.trim();
+      const pass = document.getElementById('login-password').value;
+      const errorMsg = document.getElementById('login-error-msg');
+      const submitBtn = document.getElementById('login-submit-btn');
+
+      errorMsg.classList.add('hidden');
+      submitBtn.disabled = true;
+
+      const authHeader = 'Basic ' + btoa(`${user}:${pass}`);
+
+      try {
+        const res = await fetch('/api/v4/user', {
+          headers: { 'Authorization': authHeader }
+        });
+
+        if (!res.ok) {
+          throw new Error('Invalid credentials');
+        }
+
+        const userData = await res.json();
+        userData.authHeader = authHeader;
+        state.user = userData;
+        sessionStorage.setItem('dj_user', JSON.stringify(userData));
+
+        toggleAuthModal(false);
+        showToast(`Welcome, ${userData.name || userData.username}!`, 'success');
+
+        // Load contest data and transition to workspace
+        await loadAuthenticatedContestData();
+        updateUserUI();
+
+      } catch (err) {
+        errorMsg.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    function updateUserUI() {
+      const chip = document.getElementById('user-profile-chip');
+      const authBtn = document.getElementById('auth-btn');
+      const navTabs = document.getElementById('nav-tabs');
+      const landingView = document.getElementById('view-landing');
+
+      if (state.user) {
+        // AUTHENTICATED: Show protected views & nav
+        landingView.classList.add('hidden');
+        navTabs.classList.remove('hidden');
+
+        chip.classList.remove('hidden');
+        chip.classList.add('flex');
+        document.getElementById('user-display-name').textContent = state.user.team || state.user.name || state.user.username;
+        document.getElementById('user-role-desc').textContent = state.user.team_id ? `Team: ${state.user.team_id}` : state.user.roles.join(', ');
+        document.getElementById('user-avatar-initial').textContent = (state.user.team || state.user.name || 'T')[0].toUpperCase();
+
+        authBtn.innerHTML = `
+          <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+          <span>Sign Out</span>
+        `;
+        authBtn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 transition-colors flex items-center gap-1.5';
+        authBtn.onclick = logout;
+
+        // Switch to workspace or last active tab
+        switchTab(state.activeTab || 'workspace');
+
+      } else {
+        // GUEST / PUBLIC: Show ONLY ESEN HIVE CLUB Landing Page
+        navTabs.classList.add('hidden');
+        ['workspace', 'submissions', 'scoreboard', 'clarifications'].forEach(t => {
+          document.getElementById(`view-${t}`).classList.add('hidden');
+        });
+        landingView.classList.remove('hidden');
+
+        chip.classList.add('hidden');
+        chip.classList.remove('flex');
+
+        authBtn.innerHTML = `
+          <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+          <span>Team Sign In</span>
+        `;
+        authBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 shadow-sm active:scale-[0.98] transition-all flex items-center gap-1.5';
+        authBtn.onclick = () => toggleAuthModal(true);
+      }
+    }
+
+    function logout() {
+      state.user = null;
+      sessionStorage.removeItem('dj_user');
+      updateUserUI();
+      showToast('Signed out of contest session.', 'info');
+      if (window.gsap) {
+        gsap.from('#view-landing > *', { y: 20, opacity: 0, stagger: 0.1, duration: 0.5, ease: 'power2.out' });
+      }
+    }
+
+    // Start App on page load
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+{% extends 'team/base.html.twig' %}
+
+{% block title %}Submit Solution - HiveJudge{% endblock %}
+
+{% block content %}
+    <div class="container pt-4 pb-5" style="max-width: 900px;">
+        <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+            <div>
+                <a href="{{ path('team_index') }}" class="btn btn-sm btn-outline-secondary mb-2">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                </a>
+                <h1 class="h3 fw-bold mb-0 text-dark" style="letter-spacing: -0.02em;">
+                    <i class="fas fa-code text-primary me-2"></i>Submit Solution {% if problem is not null %}<span class="text-muted">·</span> <span class="text-primary">{{ problem.name }}</span>{% endif %}
+                </h1>
+            </div>
+            <span class="badge rounded-pill bg-white text-dark border px-3 py-2 shadow-sm font-monospace">
+                <i class="fas fa-users me-1 text-primary"></i> {{ team.effectiveName|default('Team') }}
+            </span>
+        </div>
+
+        {% if current_team_contest is not empty and not current_team_contest.allowSubmit %}
+            {% include 'partials/alert.html.twig' with {'type': 'danger', 'message': 'Submissions (temporarily) disabled.'} %}
+        {% elseif current_team_contest is empty or (not is_granted('ROLE_JURY') and not current_team_contest.freezeData.started) %}
+            <div class="alert alert-danger shadow-sm" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>Contest has not yet started - cannot submit.
+            </div>
+        {% else %}
+            <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+                {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'id': 'submit_problem_form'}}) }}
+                <div class="card-body p-4" style="background-color: #F8FAFC;">
+                    <!-- Problem and Language Controls -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            {{ form_row(form.problem) }}
+                        </div>
+                        <div class="col-12 col-md-6">
+                            {{ form_row(form.language) }}
+                        </div>
+                    </div>
+
+                    <!-- Source Code Submission Mode Selector -->
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="form-label fw-bold text-dark mb-0" style="font-size: 0.88rem;">
+                                <i class="fas fa-file-code text-primary me-1"></i> Source Code
+                            </label>
+                            <div class="btn-group btn-group-sm p-1 rounded-pill border bg-white shadow-sm" role="group" aria-label="Submission Mode">
+                                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 active btn-primary text-white shadow-sm fw-bold" id="tab_mode_paste" style="font-size: 0.78rem;">
+                                    <i class="fas fa-keyboard me-1"></i> Paste Code
+                                </button>
+                                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 btn-light text-muted fw-bold" id="tab_mode_upload" style="font-size: 0.78rem;">
+                                    <i class="fas fa-folder-open me-1"></i> Upload File
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 1. Paste Code Textarea (Codeforces White Style) -->
+                        <div id="paste_code_mode_container">
+                            <div class="code-editor-card rounded-3 overflow-hidden shadow-sm border" style="border-color: #CBD5E1 !important; background-color: #FFFFFF;">
+                                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom flex-wrap gap-2" style="background-color: #F8FAFC !important; border-color: #E2E8F0 !important; font-size: 0.8rem;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fas fa-terminal text-primary"></i>
+                                        <span class="text-dark fw-semibold font-monospace" id="editor_lang_name">Select language</span>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 font-monospace px-2 py-0" id="editor_lang_badge" style="display: none; font-size: 0.72rem;">CPP</span>
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 font-monospace px-2 py-0" id="editor_autodetect_pill" style="display: none; font-size: 0.72rem;"><i class="fas fa-bolt me-1 text-warning"></i>Auto-Detected</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill text-decoration-none" id="btn_run_autodetect" title="Detect language and problem from code" style="font-size: 0.74rem;">
+                                            <i class="fas fa-magic me-1"></i>Auto-Detect
+                                        </button>
+                                        <span class="text-muted font-monospace" style="font-variant-numeric: tabular-nums; font-size: 0.75rem;" id="code_stats">
+                                            0 lines · 0 chars
+                                        </span>
+                                        <button type="button" class="btn btn-link btn-sm text-secondary p-0 text-decoration-none ms-1" id="btn_clear_code" title="Clear Code">
+                                            <i class="fas fa-trash-alt me-1"></i>Clear
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea id="submit_code_text"
+                                          class="form-control font-monospace border-0"
+                                          rows="18"
+                                          placeholder="// Codeforces style: Paste or write your solution here...
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    // Your solution
+    
+    return 0;
+}"
+                                          spellcheck="false"
+                                          autocomplete="off"
+                                          autocorrect="off"
+                                          autocapitalize="off"
+                                          style="font-family: 'JetBrains Mono', Consolas, monospace !important; font-size: 0.88rem; line-height: 1.55; background-color: #FFFFFF !important; color: #0F172A !important; tab-size: 4; -moz-tab-size: 4; resize: vertical; border-radius: 0; min-height: 320px; caret-color: #4F46E5; box-shadow: none !important;"></textarea>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-1 px-1">
+                                <span class="text-muted small" style="font-size: 0.75rem;">
+                                    <i class="fas fa-keyboard me-1 text-secondary"></i>Press <kbd style="font-size: 0.7rem; padding: 0.15rem 0.35rem; background-color: #E2E8F0; color: #0F172A;">Tab</kbd> to indent 4 spaces. Language is auto-detected on paste.
+                                </span>
+                                <span id="detected_entry_point_hint" class="text-success small fw-medium" style="display: none; font-size: 0.75rem;"></span>
+                            </div>
+                        </div>
+
+                        <!-- 2. File Upload Container -->
+                        <div id="file_upload_mode_container" class="p-3 bg-white border rounded-3 shadow-sm" style="display: none;">
+                            <label class="form-label text-muted small fw-medium mb-1">Select one or more solution source files from your disk:</label>
+                            {{ form_widget(form.code) }}
+                            <div class="alert d-none mt-2" id="files_selected"></div>
+                            {{ form_help(form.code) }}
+                            {{ form_errors(form.code) }}
+                        </div>
+                    </div>
+
+                    <!-- Entry Point Row -->
+                    <div class="mt-2">
+                        {{ form_row(form.entry_point) }}
+                    </div>
+                </div>
+
+                <div class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center">
+                    <a href="{{ path('team_index') }}" class="btn btn-outline-secondary px-3">
+                        Cancel
+                    </a>
+                    <button type="submit" id="btn_submit_solution" class="btn btn-success px-4 fw-bold shadow-sm active:scale-[0.98]">
+                        <i class="fas fa-cloud-upload-alt me-1"></i> Submit Solution
+                    </button>
+                </div>
+                {{ form_end(form) }}
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        (function() {
+            const fileInput = document.getElementById('submit_problem_code');
+            if (fileInput) {
+                fileInput.removeAttribute('required');
+
+                fileInput.addEventListener('change', (event) => {
+                    const filenameRegex = {{ validFilenameRegex }};
+                    const five_minutes_in_ms = 5 * 60 * 1000;
+                    const now = Date.now();
+                    const filesSelected = $('#files_selected');
+                    filesSelected.addClass('d-none');
+
+                    var fileInfoHtml = '';
+                    const files = event.target.files;
+                    let atLeastOneFileRecent = false;
+                    for (let file of files) {
+                        const date = new Date(file.lastModified);
+                        const ago = typeof humanReadableTimeDiff === 'function' ? humanReadableTimeDiff((now - date)/1000) + ' ago' : '';
+                        if(date > now - five_minutes_in_ms) {
+                            atLeastOneFileRecent = true;
+                        }
+                        const fileValidChars = file.name.match(filenameRegex);
+                        const size = typeof humanReadableBytes === 'function' ? humanReadableBytes(file.size) : file.size + ' B';
+
+                        let className = '';
+                        let message = `size ${size}`;
+                        if (ago) message += `, last modified ${ago}`;
+                        if(!fileValidChars) {
+                            className = 'bg-danger text-white';
+                            message += ', invalid filename';
+                        }
+                        if(file.size == 0) {
+                            className = 'bg-warning text-dark';
+                            message += ', empty file';
+                        }
+                        fileInfoHtml += `<li class="${className} p-1 rounded mb-1"><span class="filename fw-bold">${file.name}</span> (${message})</li>`;
+                    }
+                    let result = '<ul class="list-unstyled mb-0">' + fileInfoHtml + '</ul>';
+                    if(!atLeastOneFileRecent && files.length > 0) {
+                        result += '<div class="alert alert-warning py-1 px-2 mt-2 mb-0 small"><i class="fas fa-exclamation-triangle me-1"></i>None of the selected files have been recently modified</div>';
+                    }
+                    filesSelected.html(result);
+                    filesSelected.removeClass('d-none');
+                });
+            }
+
+            if (typeof initCodeforcesSubmitUI === 'function') {
+                initCodeforcesSubmitUI();
+            }
+        })();
+    </script>
+{% endblock %}

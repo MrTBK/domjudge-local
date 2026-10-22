@@ -1,0 +1,30 @@
+{% extends "public/base.html.twig" %}
+
+{% block title %}Problemset • ESEN HIVE CLUB Contest{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 720px;">
+    <div class="card shadow-sm border-0 rounded-4 text-center p-4 p-md-5 my-4" style="background: #FFFFFF; border: 1px solid #E2E8F0 !important;">
+        <div class="mb-3">
+            <span class="badge rounded-pill px-3 py-2 text-uppercase fw-bold" style="background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D;">
+                Protected Problemset
+            </span>
+        </div>
+        <h2 class="fw-bold text-dark mb-2">Team Authentication Required</h2>
+        <p class="text-secondary mx-auto mb-4" style="max-width: 480px;">
+            Problem statements and attachments are only accessible to verified participating teams during the contest.
+        </p>
+        <div>
+            {% if is_granted('ROLE_TEAM') %}
+                <a href="{{ path('team_index') }}" class="btn btn-warning btn-lg px-4 py-2 fw-bold text-dark shadow-sm" style="background-color: #F59E0B; border-color: #D97706;">
+                    <i class="fas fa-arrow-right me-2"></i>Go to Team Workspace
+                </a>
+            {% else %}
+                <a href="{{ path('login') }}" class="btn btn-warning btn-lg px-4 py-2 fw-bold text-dark shadow-sm" style="background-color: #F59E0B; border-color: #D97706;">
+                    <i class="fas fa-sign-in-alt me-2"></i>Sign in with Team Account
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

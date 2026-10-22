@@ -1,0 +1,234 @@
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: dj-mariadb
+    hostname: mariadb
+    restart: unless-stopped
+    command:
+      - --max-allowed-packet=512M
+      - --innodb-log-file-size=256M
+      - --max-connections=1000
+      - --innodb-snapshot-isolation=OFF
+      - --innodb-buffer-pool-size=2G
+      - --table-open-cache=4000
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: domjudge
+      MYSQL_USER: domjudge
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - dj-db-data:/var/lib/mysql
+    networks:
+      - domjudge-net
+
+  domserver:
+    image: domjudge/domserver:9.0.1
+    container_name: dj-domserver
+    hostname: domserver
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:8080:80"
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      MYSQL_HOST: mariadb
+      MYSQL_DATABASE: domjudge
+      MYSQL_USER: domjudge
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      - mariadb
+    volumes:
+      - ./custom-templates/public/menu.html.twig:/opt/domjudge/domserver/webapp/templates/public/menu.html.twig:ro
+      - ./custom-templates/public/scoreboard.html.twig:/opt/domjudge/domserver/webapp/templates/public/scoreboard.html.twig:ro
+      - ./custom-templates/public/problems.html.twig:/opt/domjudge/domserver/webapp/templates/public/problems.html.twig:ro
+      - ./custom-templates/security/login.html.twig:/opt/domjudge/domserver/webapp/templates/security/login.html.twig:ro
+      - ./custom-templates/team/menu.html.twig:/opt/domjudge/domserver/webapp/templates/team/menu.html.twig:ro
+      - ./custom-templates/team/index.html.twig:/opt/domjudge/domserver/webapp/templates/team/index.html.twig:ro
+      - ./custom-templates/team/partials/index_content.html.twig:/opt/domjudge/domserver/webapp/templates/team/partials/index_content.html.twig:ro
+      - ./custom-templates/team/scoreboard.html.twig:/opt/domjudge/domserver/webapp/templates/team/scoreboard.html.twig:ro
+      - ./custom-templates/team/submit.html.twig:/opt/domjudge/domserver/webapp/templates/team/submit.html.twig:ro
+      - ./custom-templates/team/submit_modal.html.twig:/opt/domjudge/domserver/webapp/templates/team/submit_modal.html.twig:ro
+      - ./custom-templates/team/partials/submit_scripts.html.twig:/opt/domjudge/domserver/webapp/templates/team/partials/submit_scripts.html.twig:ro
+      - ./custom-templates/base.html.twig:/opt/domjudge/domserver/webapp/templates/base.html.twig:ro
+      - ./custom-templates/partials/scoreboard_table.html.twig:/opt/domjudge/domserver/webapp/templates/partials/scoreboard_table.html.twig:ro
+    networks:
+      domjudge-net:
+        aliases:
+          - domserver
+          - dj-domserver
+
+  dj-judgehost-1:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-judgehost-1
+    hostname: judgehost-1
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    cpuset: "4"
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://domserver/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 0
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    depends_on:
+      - domserver
+    networks:
+      - domjudge-net
+
+  dj-judgehost-2:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-judgehost-2
+    hostname: judgehost-2
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    cpuset: "5"
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://domserver/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 1
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    depends_on:
+      - domserver
+    networks:
+      - domjudge-net
+
+  dj-judgehost-3:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-judgehost-3
+    hostname: judgehost-3
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    cpuset: "6"
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://domserver/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 2
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    depends_on:
+      - domserver
+    networks:
+      - domjudge-net
+
+  dj-judgehost-4:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-judgehost-4
+    hostname: judgehost-4
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    cpuset: "7"
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://domserver/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 3
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    depends_on:
+      - domserver
+    networks:
+      - domjudge-net
+
+  dj-judgehost-5:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-judgehost-5
+    hostname: judgehost-5
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    cpuset: "8"
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://domserver/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 4
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    depends_on:
+      - domserver
+    networks:
+      - domjudge-net
+
+  dj-judgehost-6:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-judgehost-6
+    hostname: judgehost-6
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    cpuset: "9"
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://domserver/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 5
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    depends_on:
+      - domserver
+    networks:
+      - domjudge-net
+
+  dj-judgehost-7:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-judgehost-7
+    hostname: judgehost-7
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    cpuset: "10"
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://domserver/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 6
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    depends_on:
+      - domserver
+    networks:
+      - domjudge-net
+
+  dj-judgehost-8:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-judgehost-8
+    hostname: judgehost-8
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    cpuset: "11"
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://domserver/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 7
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    depends_on:
+      - domserver
+    networks:
+      - domjudge-net
+
+volumes:
+  dj-db-data:
+    name: dj-db-data
+
+networks:
+  domjudge-net:
+    name: domjudge-net

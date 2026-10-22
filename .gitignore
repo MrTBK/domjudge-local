@@ -1,0 +1,27 @@
+# Environment variables (credentials)
+.env
+pc2-standby-and-judges/.env
+
+# Large database dumps & logs
+*.sql
+backups/*.sql
+pc2-standby-and-judges/backups/*.sql
+*.log
+
+# Bundles & exports
+*.tar
+*.tar.gz
+pc2_deployment_bundle/
+domjudge_pc2_bundle.tar.gz
+
+# Python virtual environment & cache
+.venv/
+__pycache__/
+*.py[cod]
+
+# OS / Editor files
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/

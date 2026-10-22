@@ -1,0 +1,64 @@
+{% extends 'team/base.html.twig' %}
+
+{% block title %}{{ team.effectiveName }} HiveJudge{% endblock %}
+
+{% block extrahead %}
+    {{ parent() }}
+    <style>
+        .data-table td a, .data-table td a:hover {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            padding: 6px 10px;
+        }
+
+        .data-table tr {
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .data-table tr:hover {
+            background: #F8FAFC !important;
+        }
+    </style>
+{% endblock %}
+
+{% block messages %}{% endblock %}
+{% block content %}
+    <div class="team-portal-container mx-auto" style="max-width: 1320px; padding: 0.5rem 0.75rem 2rem 0.75rem;">
+        <div data-ajax-refresh-target data-ajax-refresh-after="setFlashAndProgress" data-ajax-refresh-before="saveFlash">
+            {% include 'team/partials/index_content.html.twig' %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extrafooter %}
+    <script>
+        var $flash = null;
+
+        function saveFlash() {
+            $flash = $('[data-flash-messages]').children();
+        }
+
+        function setFlashAndProgress() {
+            var $newProgress = $('[data-ajax-refresh-target] > [data-progress-bar]');
+            if ($newProgress.length) {
+                var $oldProgress = $('body > [data-progress-bar]');
+                $oldProgress.html($newProgress.children());
+                $newProgress.remove();
+            }
+
+            $('[data-flash-messages]').html($flash);
+        }
+
+        window.initModalClarificationPreviewAdd = function() {
+            setupPreviewClarification($('#team_clarification_message') , $('#messagepreview'), false);
+        };
+
+        function markSeen($elem) {
+            $elem.closest('tr').removeClass('unseen');
+
+            // Also preview the clarification reply
+            setupPreviewClarification($('#team_clarification_message') , $('#messagepreview'), true);
+        }
+    </script>
+{% endblock %}

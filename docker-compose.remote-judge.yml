@@ -1,0 +1,42 @@
+# ==============================================================================
+# DOMjudge Remote Judgehost Node (Run on PC 2 / Secondary Machine)
+# ==============================================================================
+# Instructions:
+# 1. Ensure Docker is installed on PC 2.
+# 2. Set MAIN_SERVER_IP to the Main PC's IP (e.g. 10.119.136.40).
+# 3. Set JUDGEDAEMON_PASSWORD from the Main PC's .env file.
+# 4. Start judges: docker compose -f docker-compose.remote-judge.yml up -d
+# ==============================================================================
+
+services:
+  remote-judgehost-1:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: remote-judgehost-1
+    hostname: remote-pc-judge-1
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://${MAIN_SERVER_IP:-10.119.136.40}:8080/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 0
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+
+  remote-judgehost-2:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: remote-judgehost-2
+    hostname: remote-pc-judge-2
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://${MAIN_SERVER_IP:-10.119.136.40}:8080/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 1
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw

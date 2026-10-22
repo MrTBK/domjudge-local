@@ -1,0 +1,117 @@
+==============================================================================
+   DOMJUDGE MULTI-PC SETUP GUIDE: 2ND PC AS EXTRA JUDGE & STANDBY BACKUP
+==============================================================================
+
+This guide explains how to connect a friend's PC (PC 2) to your Main PC (PC 1) so
+that:
+  1. PC 2 acts as EXTRA JUDGEHOSTS (quadruples judging speed during the contest).
+  2. PC 2 acts as a HOT STANDBY SERVER (instantly takes over the contest with 1 command
+     if PC 1 crashes or loses power).
+
+------------------------------------------------------------------------------
+NETWORK REQUIREMENT:
+  Both PC 1 and PC 2 MUST be connected to the SAME network:
+    - Connected to the same Wi-Fi router, OR
+    - Connected via Ethernet cable / switch.
+------------------------------------------------------------------------------
+
+==============================================================================
+PART 1: SETUP ON FRIEND'S PC (PC 2)
+==============================================================================
+
+1. Install prerequisites on PC 2 (if not already installed):
+   - Linux (Ubuntu, Debian, Mint, Fedora, etc.)
+   - Docker and Docker Compose
+     (On Ubuntu/Debian: sudo apt update && sudo apt install -y docker.io docker-compose-plugin)
+
+2. Clone this repository on PC 2:
+   git clone <YOUR_GITHUB_REPO_URL>
+   cd <REPO_FOLDER_NAME>
+
+3. Build the custom judgehost image on PC 2:
+   (This equips PC 2 with all required compilers: C++, Python, PyPy3, Java,
+    Rust, Go, Kotlin, C#, Node.js)
+   
+   docker build -t domjudge/judgehost:9.0.1-custom -f Dockerfile.judgehost .
+
+4. Configure the IP and credentials on PC 2:
+   cd pc2-standby-and-judges
+   cp .env.example .env
+   nano .env   (or use any text editor)
+
+   Set the following values:
+     - MAIN_SERVER_IP = <IP address of PC 1 on your network>
+       (On PC 1, run: "hostname -I" to find this IP, e.g. 192.168.1.50)
+     - JUDGEDAEMON_PASSWORD = <same judgehost password as PC 1>
+     - DOMJUDGE_ADMIN_PASSWORD = admin1234 (or your admin password)
+
+   Save and exit the file.
+
+==============================================================================
+PART 2: USING PC 2 AS EXTRA JUDGES (DURING NORMAL CONTEST OPERATION)
+==============================================================================
+
+While PC 1 has the contest running (via ./start-contest.sh):
+
+1. On PC 2, start the remote judges:
+   cd pc2-standby-and-judges
+   ./start-remote-judges.sh
+
+2. Verify:
+   - On PC 1, open your DOMjudge Admin Dashboard: http://localhost:8080/jury/judgehosts
+   - You will see 4 new judgehosts (remote-judge-1, 2, 3, 4) appear in GREEN!
+   - Now, when teams submit code, both PC 1 and PC 2 will evaluate solutions in parallel.
+
+3. To stop remote judges anytime on PC 2:
+   ./stop-remote-judges.sh
+
+==============================================================================
+PART 3: LIVE BACKUP SYNC FROM PC 1 TO PC 2
+==============================================================================
+
+To enable seamless failover, PC 2 needs recent database snapshots.
+
+1. On PC 1 (Main PC), start the automatic backup daemon:
+   ./auto-backup.sh &
+   (This creates a non-blocking database snapshot every 5 minutes in ./backups/)
+
+2. Continuously sync snapshots to PC 2:
+   - Automatic (via SSH/rsync):
+     ./sync-backup-to-remote.sh <PC2_USER>@<PC2_IP>:~/path/to/pc2-standby-and-judges/backups/ &
+
+   - Or Manual:
+     Copy the latest .sql file from PC 1's "backups/" folder into
+     PC 2's "pc2-standby-and-judges/backups/" folder.
+
+==============================================================================
+PART 4: EMERGENCY FAILOVER (IF PC 1 CRASHES OR GOES DOWN)
+==============================================================================
+
+If PC 1 loses power, hardware fails, or crashes during the contest:
+
+1. On PC 2 (Friend's PC), run ONE command:
+   cd pc2-standby-and-judges
+   ./takeover-and-become-main-server.sh
+
+2. What happens automatically in ~20 seconds:
+   - PC 2 stops the remote judge worker containers.
+   - MariaDB is started on PC 2.
+   - The latest database snapshot in backups/ is automatically imported.
+   - DOMserver (web UI, API, scoreboard) and local judges boot up on PC 2.
+   - All teams, submissions, test results, and scoreboard states are preserved!
+
+3. Announce the new contest URL to teams:
+   The terminal will output the URL:
+   http://<PC2_IP>:8080
+
+   (Jury link: http://<PC2_IP>:8080/jury | user: admin | pass: admin1234)
+
+==============================================================================
+PRO-TIP: ZERO-RELOAD FAILOVER
+==============================================================================
+If you have access to your local Wi-Fi router settings:
+Assign PC 2 the EXACT same IP address that PC 1 had (or set static IP on PC 2's
+network card after PC 1 is off).
+If PC 2 has the old IP of PC 1, teams won't even need to refresh or change their
+browser URLs!
+==============================================================================

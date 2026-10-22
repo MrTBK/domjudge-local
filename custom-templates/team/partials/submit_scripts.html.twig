@@ -1,0 +1,582 @@
+{% include 'partials/javascript_language_detect.html.twig' %}
+<script>
+    var LANG_EXTENSION_MAP = {
+        'cpp': 'cpp',
+        'c': 'c',
+        'py3': 'py',
+        'java': 'java',
+        'kt': 'kt',
+        'go': 'go',
+        'rs': 'rs',
+        'csharp': 'cs',
+        'js': 'js',
+        'bash': 'sh',
+        'sh': 'sh',
+        'hs': 'hs',
+        'pas': 'pas',
+        'rb': 'rb',
+        'swift': 'swift',
+        'lua': 'lua',
+        'adb': 'adb',
+        'f95': 'f95',
+        'r': 'R',
+        'scala': 'scala',
+        'awk': 'awk',
+        'pl': 'pl',
+        'plg': 'plg',
+        'ocaml': 'ml'
+    };
+
+    {% if submission_languages is defined and submission_languages is not empty %}
+        {% for lang in submission_languages %}
+            {% if lang.extensions is not empty %}
+                LANG_EXTENSION_MAP['{{ lang.langid }}'] = '{{ lang.extensions[0]|lower }}';
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    function getPrimaryExtension(langid) {
+        if (LANG_EXTENSION_MAP && LANG_EXTENSION_MAP[langid]) {
+            return LANG_EXTENSION_MAP[langid];
+        }
+        return 'txt';
+    }
+
+    function detectLanguageFromCode(code) {
+        if (!code || typeof code !== 'string') return null;
+        var trimmed = code.trim();
+        if (trimmed.length === 0) return null;
+
+        // 1. C++
+        if (/^\s*#\s*include\s*[<"](iostream|vector|bits\/stdc\+\+\.h|algorithm|string|set|map|queue|stack|cmath|cstdio)[>"]/m.test(code) ||
+            /using\s+namespace\s+std\s*;/m.test(code) ||
+            /std::(cout|cin|vector|string|map|set|pair|unordered_map)/m.test(code) ||
+            /template\s*<\s*typename/m.test(code) ||
+            /ios_base::sync_with_stdio/m.test(code) ||
+            /cin\s*>>/m.test(code) ||
+            /cout\s*<</m.test(code)) {
+            return 'cpp';
+        }
+
+        // 2. Python 3
+        if (/^\s*(def\s+\w+\s*\(.*?\)\s*:|import\s+(sys|math|collections|bisect|heapq|itertools)|from\s+\w+\s+import|if\s+__name__\s*==\s*['"]__main__['"]\s*:)/m.test(code) ||
+            /^\s*(print\s*\(|input\s*\(\)|sys\.stdin\.read|sys\.stdin\.readline)/m.test(code) ||
+            /^\s*(for\s+\w+\s+in\s+range\s*\(|elif\s+.*?:)/m.test(code)) {
+            return 'py3';
+        }
+
+        // 3. Java
+        if (/^\s*(import\s+java\.|public\s+class\s+\w+|public\s+static\s+void\s+main\s*\(\s*String)/m.test(code) ||
+            /System\.(out|err)\.(println|print|printf)/m.test(code) ||
+            /Scanner\s+\w+\s*=\s*new\s+Scanner/m.test(code) ||
+            /BufferedReader\s+\w+\s*=\s*new/m.test(code)) {
+            return 'java';
+        }
+
+        // 4. Kotlin
+        if (/^\s*(fun\s+main\s*\(|package\s+\w+|import\s+kotlin\.)/m.test(code) ||
+            /^\s*(val\s+\w+|var\s+\w+)\s*[:=]/m.test(code) ||
+            (/println\s*\(/m.test(code) && /fun\s+\w+/.test(code))) {
+            return 'kt';
+        }
+
+        // 5. Rust
+        if (/^\s*(fn\s+main\s*\(\s*\)|use\s+std::|println!\s*\(|let\s+mut\s+\w+)/m.test(code) ||
+            /impl\s+\w+\s*\{/m.test(code) ||
+            /pub\s+fn\s+\w+/m.test(code)) {
+            return 'rs';
+        }
+
+        // 6. Go
+        if (/^\s*(package\s+main|import\s+\(\s*"fmt"|func\s+main\s*\(\s*\))/m.test(code) ||
+            /fmt\.(Println|Printf|Print|Scan)/m.test(code)) {
+            return 'go';
+        }
+
+        // 7. C#
+        if (/^\s*(using\s+System|namespace\s+\w+|static\s+void\s+Main)/m.test(code) ||
+            /Console\.(WriteLine|Write|ReadLine)/m.test(code)) {
+            return 'csharp';
+        }
+
+        // 8. C (pure)
+        if (/^\s*#\s*include\s*[<"](stdio\.h|stdlib\.h|string\.h|math\.h)[>"]/m.test(code) ||
+            /printf\s*\(|scanf\s*\(/m.test(code)) {
+            return 'c';
+        }
+
+        // 9. JavaScript
+        if (/console\.log\s*\(|require\s*\(['"]fs['"]\)|function\s+main\s*\(|const\s+readline\s*=/m.test(code)) {
+            return 'js';
+        }
+
+        return null;
+    }
+
+    function detectProblemFromCode(code) {
+        if (!code || typeof code !== 'string') return null;
+        var $probSelect = $('#submit_problem_problem');
+        if (!$probSelect.length || !$probSelect[0].options) return null;
+
+        var headerLines = code.split('\n').slice(0, 10).join(' ').toLowerCase();
+
+        for (var i = 1; i < $probSelect[0].options.length; i++) {
+            var opt = $probSelect[0].options[i];
+            var text = opt.text.toLowerCase();
+            var parts = text.split(' - ');
+            var shortname = parts[0].trim();
+            var name = parts.length > 1 ? parts[1].trim() : '';
+
+            var reShort = new RegExp('(?:problem|task|contest|#|//)\\s*:?\\s*' + shortname + '\\b', 'i');
+            if (reShort.test(headerLines)) {
+                return opt.value;
+            }
+
+            if (name.length > 3 && headerLines.indexOf(name) !== -1) {
+                return opt.value;
+            }
+        }
+        return null;
+    }
+
+    function entryPointDetectJava(filename) {
+        return filename.replace(/\.[^\.]*$/, '');
+    }
+
+    function entryPointDetectKt(filename) {
+        var filebase = filename.replace(/\.[^\.]*$/, '');
+        if (filebase === '') return '_Kt';
+
+        filebase = filebase.replace(/[^a-zA-Z0-9]/, '_');
+        if (filebase.charAt(0).match(/^[a-zA-Z]$/)) {
+            return filebase.charAt(0).toUpperCase() + filebase.slice(1) + 'Kt';
+        } else {
+            return '_' + filebase + 'Kt';
+        }
+    }
+
+    function maybeShowEntryPoint(filename) {
+        var langid = $('#submit_problem_language').val();
+        if (langid === "" || !langid) {
+            $('[data-entry-point]').hide();
+            return;
+        }
+        var $entryPoint = $('[data-entry-point]');
+        var $entryPointLabel = $entryPoint.find('label');
+        var $entryPointInput = $entryPoint.find('input');
+        var entryPointDescription = typeof getEntryPoint === 'function' ? getEntryPoint(langid) : null;
+        if (entryPointDescription) {
+            $entryPoint.show();
+        } else {
+            $entryPoint.hide();
+        }
+
+        if (entryPointDescription) {
+            var $labelChildren = $entryPointLabel.children();
+            $entryPointLabel.text(entryPointDescription).append($labelChildren);
+            $entryPointInput.attr('required', 'required');
+        } else {
+            $entryPointInput.attr('required', null);
+        }
+
+        if (entryPointDescription && filename) {
+            switch (langid) {
+                case 'java':
+                    $entryPointInput.val(entryPointDetectJava(filename));
+                    break;
+                case 'kt':
+                    $entryPointInput.val(entryPointDetectKt(filename));
+                    break;
+                default:
+                    $entryPointInput.val(filename);
+            }
+        } else if (!entryPointDescription) {
+            $entryPointInput.val('');
+        }
+    }
+
+    function updateCodeStats() {
+        var $textarea = $('#submit_code_text');
+        if (!$textarea.length) return;
+        var val = $textarea.val() || '';
+        var lines = val ? val.split('\n').length : 0;
+        var chars = val.length;
+        var bytes = new Blob([val]).size;
+        var sizeStr = typeof humanReadableBytes === 'function' ? humanReadableBytes(bytes) : bytes + ' B';
+        $('#code_stats').text(lines + (lines === 1 ? ' line' : ' lines') + ' · ' + chars + ' chars (' + sizeStr + ')');
+    }
+
+    function handleEditorTab(textarea, e) {
+        if (e.key !== 'Tab') return;
+        e.preventDefault();
+
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        var value = textarea.value;
+
+        if (start !== end && value.substring(start, end).indexOf('\n') !== -1) {
+            var lineStart = value.lastIndexOf('\n', start - 1) + 1;
+            var lineEnd = value.indexOf('\n', end);
+            if (lineEnd === -1) lineEnd = value.length;
+
+            var lines = value.substring(lineStart, lineEnd).split('\n');
+            var modifiedLines = [];
+            var lengthDiff = 0;
+
+            if (e.shiftKey) {
+                for (var i = 0; i < lines.length; i++) {
+                    if (lines[i].startsWith('    ')) {
+                        modifiedLines.push(lines[i].substring(4));
+                        lengthDiff -= 4;
+                    } else if (lines[i].startsWith('  ')) {
+                        modifiedLines.push(lines[i].substring(2));
+                        lengthDiff -= 2;
+                    } else if (lines[i].startsWith('\t')) {
+                        modifiedLines.push(lines[i].substring(1));
+                        lengthDiff -= 1;
+                    } else {
+                        modifiedLines.push(lines[i]);
+                    }
+                }
+            } else {
+                for (var i = 0; i < lines.length; i++) {
+                    modifiedLines.push('    ' + lines[i]);
+                    lengthDiff += 4;
+                }
+            }
+
+            var newBlock = modifiedLines.join('\n');
+            textarea.value = value.substring(0, lineStart) + newBlock + value.substring(lineEnd);
+            textarea.selectionStart = start;
+            textarea.selectionEnd = end + lengthDiff;
+        } else {
+            if (e.shiftKey) {
+                var lineStart = value.lastIndexOf('\n', start - 1) + 1;
+                if (value.substring(lineStart, lineStart + 4) === '    ') {
+                    textarea.value = value.substring(0, lineStart) + value.substring(lineStart + 4);
+                    textarea.selectionStart = textarea.selectionEnd = Math.max(lineStart, start - 4);
+                }
+            } else {
+                textarea.value = value.substring(0, start) + '    ' + value.substring(end);
+                textarea.selectionStart = textarea.selectionEnd = start + 4;
+            }
+        }
+        updateCodeStats();
+    }
+
+    function runAutoDetection() {
+        var $codeText = $('#submit_code_text');
+        var $langSelect = $('#submit_problem_language');
+        var $probSelect = $('#submit_problem_problem');
+        var code = $codeText.val() || '';
+        if (!code.trim()) return false;
+
+        var detectedLang = detectLanguageFromCode(code);
+        var detectedProb = detectProblemFromCode(code);
+        var foundSomething = false;
+
+        if (detectedLang && $langSelect.length) {
+            for (var i = 0; i < $langSelect[0].options.length; i++) {
+                if ($langSelect[0].options[i].value === detectedLang) {
+                    $langSelect[0].selectedIndex = i;
+                    $langSelect.trigger('change');
+                    $('#editor_autodetect_pill').html('<i class="fas fa-bolt me-1 text-warning"></i>Detected: ' + $langSelect[0].options[i].text).show();
+                    foundSomething = true;
+                    break;
+                }
+            }
+        }
+
+        if (detectedProb && $probSelect.length && !$probSelect.val()) {
+            $probSelect.val(detectedProb).trigger('change');
+            foundSomething = true;
+        }
+
+        // Auto-detect Java entry point
+        if ($langSelect.val() === 'java') {
+            var jMatch = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
+            if (jMatch && jMatch[1]) {
+                var $epInput = $('[data-entry-point] input');
+                if ($epInput.length) {
+                    $epInput.val(jMatch[1]);
+                    $('#detected_entry_point_hint').html('<i class="fas fa-magic me-1"></i>Main Class: <strong>' + jMatch[1] + '</strong>').show();
+                }
+            }
+        }
+
+        return foundSomething;
+    }
+
+    function initCodeforcesSubmitUI() {
+        var $tabPaste = $('#tab_mode_paste');
+        var $tabUpload = $('#tab_mode_upload');
+        var $pasteContainer = $('#paste_code_mode_container');
+        var $uploadContainer = $('#file_upload_mode_container');
+        var $codeText = $('#submit_code_text');
+        var $fileInput = $('#submit_problem_code');
+        var $langSelect = $('#submit_problem_language');
+        var $form = $('form[name=submit_problem]');
+
+        // Ensure form doesn't trigger HTML5 hidden-element validation
+        $form.attr('novalidate', 'novalidate');
+
+        // Mode Switching
+        $tabPaste.off('click').on('click', function () {
+            $tabPaste.addClass('active btn-primary text-white shadow-sm').removeClass('btn-light text-muted');
+            $tabUpload.removeClass('active btn-primary text-white shadow-sm').addClass('btn-light text-muted');
+            $pasteContainer.show();
+            $uploadContainer.hide();
+            $fileInput.removeAttr('required');
+            $codeText.focus();
+        });
+
+        $tabUpload.off('click').on('click', function () {
+            $tabUpload.addClass('active btn-primary text-white shadow-sm').removeClass('btn-light text-muted');
+            $tabPaste.removeClass('active btn-primary text-white shadow-sm').addClass('btn-light text-muted');
+            $uploadContainer.show();
+            $pasteContainer.hide();
+        });
+
+        // Ensure file input is not required when in paste mode initially
+        if ($pasteContainer.is(':visible') || $tabPaste.hasClass('active')) {
+            $fileInput.removeAttr('required');
+        }
+
+        // Tab Indentation
+        $codeText.off('keydown').on('keydown', function (e) {
+            handleEditorTab(this, e);
+        });
+
+        // Live stats & Auto-detection on typing/pasting
+        $codeText.off('input paste').on('input paste', function () {
+            setTimeout(function () {
+                updateCodeStats();
+                runAutoDetection();
+            }, 10);
+        });
+
+        // Dedicated Auto-detect button
+        $('#btn_run_autodetect').off('click').on('click', function (e) {
+            e.preventDefault();
+            var success = runAutoDetection();
+            if (success) {
+                var $btn = $(this);
+                $btn.addClass('btn-success text-white').removeClass('btn-outline-info');
+                setTimeout(function () {
+                    $btn.removeClass('btn-success text-white').addClass('btn-outline-info');
+                }, 1200);
+            } else {
+                alert('Could not auto-detect language from current code. Please select language manually.');
+            }
+        });
+
+        // Clear button
+        $('#btn_clear_code').off('click').on('click', function () {
+            if ($codeText.val()) {
+                $codeText.val('');
+                updateCodeStats();
+                $('#detected_entry_point_hint').hide();
+                $('#editor_autodetect_pill').hide();
+                $codeText.focus();
+            }
+        });
+
+        // Update editor header when language changes
+        $langSelect.off('change.editor').on('change.editor', function () {
+            var selectedText = $langSelect.find('option:selected').text();
+            var selectedVal = $langSelect.val();
+            if (selectedVal) {
+                $('#editor_lang_name').text(selectedText);
+                $('#editor_lang_badge').text(selectedVal.toUpperCase()).show();
+            } else {
+                $('#editor_lang_name').text('Select language');
+                $('#editor_lang_badge').hide();
+                $('#editor_autodetect_pill').hide();
+            }
+
+            if (selectedVal === 'java') {
+                var code = $codeText.val() || '';
+                var jMatch = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
+                if (jMatch && jMatch[1]) {
+                    var $epInput = $('[data-entry-point] input');
+                    if ($epInput.length) {
+                        $epInput.val(jMatch[1]);
+                        $('#detected_entry_point_hint').html('<i class="fas fa-magic me-1"></i>Main Class: <strong>' + jMatch[1] + '</strong>').show();
+                    }
+                }
+            }
+        });
+
+        // Initial updates
+        updateCodeStats();
+        if ($langSelect.val()) {
+            $langSelect.trigger('change.editor');
+        }
+    }
+
+    function prepareAndValidateSubmission($form) {
+        var isPasteMode = $('#tab_mode_paste').hasClass('active') || $('#paste_code_mode_container').is(':visible');
+        var $codeText = $('#submit_code_text');
+        var $fileInput = $('#submit_problem_code');
+        var $langSelect = $('#submit_problem_language');
+        var $probSelect = $('#submit_problem_problem');
+
+        // Always remove required attribute from file input to prevent HTML5 hidden control rejection
+        $fileInput.removeAttr('required');
+
+        if (isPasteMode) {
+            var code = $codeText.val();
+            if (!code || code.trim() === '') {
+                alert('Please enter or paste your source code before submitting.');
+                $codeText.focus();
+                return false;
+            }
+
+            // Auto-detect language if missing
+            if (!$langSelect.val()) {
+                runAutoDetection();
+            }
+
+            if (!$langSelect.val()) {
+                alert('Please select a programming language.');
+                $langSelect.focus().addClass('errorfield');
+                return false;
+            }
+
+            if (!$probSelect.val()) {
+                alert('Please select a problem.');
+                $probSelect.focus().addClass('errorfield');
+                return false;
+            }
+
+            var langId = $langSelect.val();
+            var ext = getPrimaryExtension(langId) || 'txt';
+            var filename = 'solution.' + ext;
+
+            if (langId === 'java') {
+                var jMatch = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
+                var className = jMatch ? jMatch[1] : 'Main';
+                filename = className + '.java';
+                var $epInput = $('[data-entry-point] input');
+                if ($epInput.length && !$epInput.val()) {
+                    $epInput.val(className);
+                }
+            } else if (langId === 'kt') {
+                filename = 'Main.kt';
+                var $epInput = $('[data-entry-point] input');
+                if ($epInput.length && !$epInput.val()) {
+                    $epInput.val('MainKt');
+                }
+            }
+
+            try {
+                var blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+                var file = new File([blob], filename, { type: 'text/plain;charset=utf-8', lastModified: Date.now() });
+                var dt = new DataTransfer();
+                dt.items.add(file);
+                $fileInput[0].files = dt.files;
+            } catch (err) {
+                console.error('DataTransfer error:', err);
+                alert('Could not package code for submission. Please try Upload File tab.');
+                return false;
+            }
+        } else {
+            // Upload file mode
+            if (!$fileInput[0].files || $fileInput[0].files.length === 0) {
+                alert('Please select a source file to submit.');
+                $fileInput.focus();
+                return false;
+            }
+            if (!$langSelect.val()) {
+                alert('Please select a programming language.');
+                $langSelect.focus().addClass('errorfield');
+                return false;
+            }
+            if (!$probSelect.val()) {
+                alert('Please select a problem.');
+                $probSelect.focus().addClass('errorfield');
+                return false;
+            }
+        }
+
+        // Visual feedback on button
+        var $btn = $form.find('button[type=submit]');
+        $btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Submitting...').prop('disabled', true);
+
+        // Ensure form natively submits without confirm popup
+        setTimeout(function () {
+            $form[0].submit();
+        }, 10);
+
+        return true;
+    }
+
+    $(function () {
+        var $entryPoint = $('[data-entry-point]');
+        $entryPoint.hide();
+
+        var processFile = function () {
+            var filename = $('#submit_problem_code').val();
+            if (filename !== '' && filename !== undefined) {
+                filename = filename.replace(/^.*[\\\/]/, '');
+                var parts = filename.split('.').reverse();
+                if (parts.length < 2) return;
+                var lcParts = [parts[0].toLowerCase(), parts[1].toLowerCase()];
+
+                var language = document.getElementById('submit_problem_language');
+                if (language && language.value === '') {
+                    var langid = typeof getMainExtension === 'function' ? getMainExtension(lcParts[0]) : '';
+                    for (var i = 0; i < language.length; i++) {
+                        if (language.options[i].value === langid) {
+                            language.selectedIndex = i;
+                            $(language).trigger('change');
+                        }
+                    }
+                }
+
+                maybeShowEntryPoint(filename);
+
+                var problem = document.getElementById('submit_problem_problem');
+                if (problem && problem.value === '') {
+                    for (var i = 0; i < problem.length; i++) {
+                        if (problem.options[i].text.split(/ - /)[0].toLowerCase() === lcParts[1]) {
+                            problem.selectedIndex = i;
+                        }
+                    }
+                }
+            }
+        };
+
+        var $body = $('body');
+        $body.on('change', '#submit_problem_code', processFile);
+        $body.on('change', '#submit_problem_language', function () {
+            maybeShowEntryPoint();
+        });
+
+        // Intercept form submission
+        $body.on('submit', 'form[name=submit_problem]', function (e) {
+            e.preventDefault();
+            return prepareAndValidateSubmission($(this));
+        });
+
+        // Intercept submit button click
+        $body.on('click', '#btn_submit_solution, form[name=submit_problem] button[type=submit]', function (e) {
+            e.preventDefault();
+            var $form = $(this).closest('form');
+            if (!$form.length) {
+                $form = $('form[name=submit_problem]');
+            }
+            return prepareAndValidateSubmission($form);
+        });
+
+        processFile();
+        maybeShowEntryPoint();
+        initCodeforcesSubmitUI();
+
+        window.initSubmitModal = function ($elem) {
+            $('[data-entry-point]').hide();
+            initCodeforcesSubmitUI();
+            maybeShowEntryPoint();
+        };
+    });
+</script>

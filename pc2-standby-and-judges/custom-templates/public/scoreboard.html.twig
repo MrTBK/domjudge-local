@@ -1,0 +1,110 @@
+{% extends "public/base.html.twig" %}
+
+{% block title %}Welcome to ESEN HIVE CLUB Contest{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 960px;">
+    
+    <!-- ESEN HIVE CLUB Hero Header -->
+    <div class="text-center my-4">
+        
+        <!-- Converted Black Logo from /home/tbk/Downloads/Untitled.png -->
+        <div class="d-inline-flex align-items-center justify-content-center p-3 mb-3 rounded-4 shadow-sm" style="background: #FFFFFF; border: 1px solid #E2E8F0;">
+            <img src="{{ asset('images/hive-logo.png') }}" alt="ESEN HIVE CLUB" style="max-height: 110px; max-width: 220px; object-fit: contain;">
+        </div>
+
+        <div class="mb-2">
+            <span class="badge rounded-pill px-3 py-2 text-uppercase fw-bold" style="background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-size: 0.75rem; letter-spacing: 1px;">
+                🐝 ESEN HIVE CLUB • University of Manouba
+            </span>
+        </div>
+
+        <h1 class="display-5 fw-bold text-dark mt-2 mb-3" style="letter-spacing: -0.5px;">
+            Welcome to <span style="color: #D97706;">ESEN HIVE CLUB</span> Contest
+        </h1>
+
+        <p class="lead text-secondary mx-auto" style="max-width: 650px; font-size: 1.1rem; line-height: 1.6;">
+            The official competitive programming arena of ESEN Hive Club. Enter with your team credentials to access problem statements, submit solutions, and track live contest standings.
+        </p>
+    </div>
+
+    <!-- Main Card Action -->
+    <div class="card shadow-sm border-0 rounded-4 my-4" style="background: #FFFFFF; border: 1px solid #E2E8F0 !important;">
+        <div class="card-body p-4 p-md-5 text-center">
+            
+            {% if is_granted('ROLE_TEAM') %}
+                <!-- Already Logged In -->
+                <div class="py-2">
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold mb-3">
+                        <i class="fas fa-check-circle me-1"></i> Authenticated as {{ app.user.team.name | default(app.user.username) }}
+                    </span>
+                    <h3 class="fw-bold text-dark mt-2">Ready to compete?</h3>
+                    <p class="text-muted mb-4">You have full access to problem statements, submitting solutions, and receiving jury verdicts.</p>
+                    <a href="{{ path('team_index') }}" class="btn btn-lg px-4 py-2 fw-bold text-white shadow-sm" style="background-color: #D97706; border-color: #B45309;">
+                        <i class="fas fa-arrow-right me-2"></i> Enter Team Workspace
+                    </a>
+                </div>
+            {% else %}
+                <!-- Public Guest State -->
+                <div class="py-2">
+                    <h4 class="fw-bold text-dark mb-2">Team Authentication Required</h4>
+                    <p class="text-secondary mx-auto mb-4" style="max-width: 500px; font-size: 0.95rem;">
+                        Problem statements and the contest scoreboard are protected for competing participants. Please sign in to enter the contest.
+                    </p>
+
+                    <div class="d-flex flex-wrap justify-content-center gap-3">
+                        <a href="{{ path('login') }}" class="btn btn-lg px-4 py-2 fw-bold text-dark shadow-sm" style="background-color: #F59E0B; border-color: #D97706;">
+                            <i class="fas fa-sign-in-alt me-2"></i> Team Sign In
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- Feature Grid Highlights -->
+    <div class="row g-3 my-2 text-start">
+        <div class="col-md-4">
+            <div class="p-3 bg-white rounded-3 border h-100 shadow-sm" style="border-color: #E2E8F0 !important;">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="text-warning fs-5">⚡</span>
+                    <strong class="text-dark">4-Core Dedicated Engines</strong>
+                </div>
+                <p class="text-muted small mb-0">
+                    Submissions are judged in isolated hardware cgroups with sub-second verdict turnarounds.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="p-3 bg-white rounded-3 border h-100 shadow-sm" style="border-color: #E2E8F0 !important;">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="text-warning fs-5">🐝</span>
+                    <strong class="text-dark">Polyglot Runtimes</strong>
+                </div>
+                <p class="text-muted small mb-0">
+                    High-performance support for PyPy3, C++20, Java 21, Rust, Go, Kotlin, and Node.js.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="p-3 bg-white rounded-3 border h-100 shadow-sm" style="border-color: #E2E8F0 !important;">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="text-warning fs-5">🏆</span>
+                    <strong class="text-dark">ICPC Pass-Fail Rules</strong>
+                </div>
+                <p class="text-muted small mb-0">
+                    Standard competitive programming rules with a 20-minute penalty per rejected submission.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5 text-muted small">
+        <span>ESEN Hive Club • Powered by DOMjudge v9.0.1</span>
+    </div>
+
+</div>
+{% endblock %}

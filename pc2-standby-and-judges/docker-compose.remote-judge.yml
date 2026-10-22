@@ -1,0 +1,64 @@
+services:
+  remote-judge-1:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-remote-judge-1
+    hostname: remote-judge-1
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://${MAIN_SERVER_IP}:8080/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 0
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+
+  remote-judge-2:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-remote-judge-2
+    hostname: remote-judge-2
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://${MAIN_SERVER_IP}:8080/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 1
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+
+  remote-judge-3:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-remote-judge-3
+    hostname: remote-judge-3
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://${MAIN_SERVER_IP}:8080/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 2
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+
+  remote-judge-4:
+    image: domjudge/judgehost:9.0.1-custom
+    container_name: dj-remote-judge-4
+    hostname: remote-judge-4
+    restart: unless-stopped
+    privileged: true
+    cgroup: host
+    environment:
+      CONTAINER_TIMEZONE: ${CONTAINER_TIMEZONE:-Africa/Tunis}
+      DOMSERVER_BASEURL: "http://${MAIN_SERVER_IP}:8080/"
+      JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD: ${JUDGEDAEMON_PASSWORD}
+      DAEMON_ID: 3
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
